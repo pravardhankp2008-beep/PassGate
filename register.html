@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PassGate — Check-in</title>
+  <title>PassGate — Register & Pass</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><path d='M7 8h10'/><path d='M7 12h10'/><path d='M7 16h6'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,336 +25,108 @@
       --shadow: 0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
+      background: var(--bg); color: var(--text); line-height: 1.5; font-size: 16px;
+      -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column;
     }
 
-    .container {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+    .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; width: 100%; }
 
-    header {
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
+    header { border-bottom: 1px solid var(--border); background: var(--surface); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 18px; }
+    .brand-icon { width: 32px; height: 32px; background: var(--primary); color: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .nav-links { display: flex; align-items: center; gap: 16px; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
 
-    .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--primary);
-      color: #fff;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      transition: color .15s;
-    }
-
-    .nav-links a:hover {
-      color: var(--text);
-    }
-
-    .portal-main {
-      padding: 48px 0;
-      display: flex;
-      justify-content: center;
-    }
-
-    .portal-wrapper {
-      width: 100%;
-      max-width: 520px;
-    }
+    .portal-main { flex: 1; padding: 48px 0; display: flex; justify-content: center; }
+    .portal-wrapper { width: 100%; max-width: 500px; }
 
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 32px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 32px;
     }
 
-    .event-context {
-      margin-bottom: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .context-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-    .event-name {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
+    .event-context { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .context-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .event-name { font-size: 20px; font-weight: 700; color: var(--text); }
     .spots-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #f0fdf4;
-      color: var(--success);
-      border: 1px solid #bbf7d0;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      font-size: 13px;
-      font-weight: 600;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: var(--success);
+      border: 1px solid #bbf7d0; padding: 4px 12px; border-radius: 9999px; font-size: 13px; font-weight: 600; white-space: nowrap;
     }
+    .event-meta { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 13px; }
+    .event-meta-row { display: flex; align-items: center; gap: 8px; }
 
-    .event-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .event-meta-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .form-group {
-      margin-bottom: 24px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--text);
-    }
-
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
     .form-input, .form-select {
-      width: 100%;
-      height: 48px;
-      padding: 0 16px;
-      font-size: 16px;
-      font-family: inherit;
-      color: var(--text);
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
+      width: 100%; height: 48px; padding: 0 16px; font-size: 15px; font-family: inherit; color: var(--text);
+      background: #ffffff; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: all .15s;
     }
-
-    .form-input:focus, .form-select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-    }
-
-    .form-hint {
-      margin-top: 6px;
-      font-size: 13px;
-      color: var(--muted);
-    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+    .form-hint { margin-top: 6px; font-size: 12px; color: var(--muted); }
 
     .btn-primary {
-      width: 100%;
-      background: var(--primary);
-      color: #fff;
-      border: 0;
-      border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: transform .15s, box-shadow .15s;
+      width: 100%; background: var(--primary); color: #fff; border: 0; border-radius: 10px;
+      padding: 13px 20px; font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex;
+      align-items: center; justify-content: center; gap: 8px; transition: transform .15s, box-shadow .15s;
     }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(79,70,229,.35);
-    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79,70,229,.35); }
 
     .btn-secondary {
-      width: 100%;
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: background .15s;
+      width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s; text-decoration: none;
+    }
+    .btn-secondary:hover { background: #f1f5f9; }
+
+    /* Dedicated VIP Ticket View */
+    .ticket-view { display: none; }
+    .ticket-container {
+      background: #ffffff; border: 1px solid var(--border); border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.08); overflow: hidden; position: relative;
     }
 
-    .btn-secondary:hover {
-      background: #f1f5f9;
-    }
+    .ticket-top { padding: 24px; background: #ffffff; position: relative; }
+    .ticket-badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .badge-vip { background: #ede9fe; color: var(--primary); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .badge-status { color: var(--success); font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 
-    .ticket-view {
-      display: none;
-    }
+    .ticket-event-name { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .ticket-attendee-name { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
 
-    .ticket-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      position: relative;
+    /* Ticket Tear Divider with Notches */
+    .tear-line {
+      height: 2px; border-top: 2px dashed #cbd5e1; margin: 16px -24px 20px; position: relative;
     }
-
-    .ticket-top {
-      padding: 24px;
-      background: #ffffff;
-      border-bottom: 2px dashed var(--border);
-      position: relative;
+    .tear-line::before, .tear-line::after {
+      content: ''; position: absolute; top: -11px; width: 20px; height: 20px; background: var(--bg); border-radius: 50%;
     }
+    .tear-line::before { left: -10px; }
+    .tear-line::after { right: -10px; }
 
-    .ticket-top::before,
-    .ticket-top::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      width: 20px;
-      height: 20px;
-      background: var(--bg);
-      border-radius: 50%;
+    .ticket-body { padding: 0 24px 28px; text-align: center; }
+    .qr-frame {
+      display: inline-flex; justify-content: center; align-items: center; background: #ffffff;
+      padding: 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
     }
-
-    .ticket-top::before { left: -10px; }
-    .ticket-top::after { right: -10px; }
-
-    .ticket-badge-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+    .pass-serial {
+      font-family: monospace; font-size: 14px; font-weight: 700; color: var(--text);
+      background: #f1f5f9; padding: 6px 14px; border-radius: 6px; display: inline-block; margin-bottom: 12px;
     }
+    .pass-instructions { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.4; }
 
-    .badge-pill {
-      background: #ede9fe;
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 9999px;
-    }
-
-    .ticket-event-name {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .ticket-attendee-name {
-      font-size: 16px;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .ticket-body {
-      padding: 32px 24px 24px;
-      text-align: center;
-      background: #fafafa;
-    }
-
-    .qr-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0 auto 16px;
-      width: 200px;
-      height: 200px;
-      background: #ffffff;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-
-    .pass-token-text {
-      font-family: monospace;
-      font-size: 13px;
-      color: var(--muted);
-      background: #f1f5f9;
-      padding: 6px 12px;
-      border-radius: 6px;
-      display: inline-block;
-      margin-bottom: 16px;
-      word-break: break-all;
-    }
-
-    .ticket-instructions {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.4;
-      margin-bottom: 24px;
-    }
-
-    .ticket-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .ticket-actions { display: flex; flex-direction: column; gap: 10px; }
 
     @media print {
       body { background: #ffffff; }
-      header, .nav-links, .ticket-actions, .event-context, footer { display: none !important; }
+      header, .ticket-actions, footer { display: none !important; }
       .portal-main { padding: 0; }
-      .ticket-card { box-shadow: none; border: 2px solid #000; width: 100%; max-width: 450px; margin: 20px auto; }
+      .ticket-container { box-shadow: none; border: 2px solid #000; max-width: 420px; margin: 20px auto; }
     }
   </style>
 </head>
@@ -364,12 +136,7 @@
     <div class="container nav-inner">
       <a href="./index.html" class="brand">
         <div class="brand-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <path d="M7 8h10"/>
-            <path d="M7 12h10"/>
-            <path d="M7 16h6"/>
-          </svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>
         </div>
         PassGate
       </a>
@@ -384,34 +151,24 @@
   <main class="portal-main">
     <div class="portal-wrapper">
 
+      <!-- Registration Form View -->
       <div class="card" id="registrationCard">
         <div class="event-context">
           <div class="context-top">
-            <h1 class="event-name" id="displayEventName">Loading Event...</h1>
+            <h1 class="event-name" id="displayEventName">Byte Race 2026 — Grand Arena</h1>
             <span class="spots-badge" id="spotsRemainingBadge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 14 14"/>
-              </svg>
-              <span id="spotsCount">...</span> spots left
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+              <span id="spotsCount">144</span> spots left
             </span>
           </div>
           <div class="event-meta">
             <div class="event-meta-row">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              <span id="displayEventDate">Retrieving schedule...</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span id="displayEventDate">November 1, 2026 · 09:30 AM</span>
             </div>
             <div class="event-meta-row">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-              <span id="displayEventVenue">Checking venue location...</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span id="displayEventVenue">Main Auditorium & Tech Complex, VCET Puttur</span>
             </div>
           </div>
         </div>
@@ -425,11 +182,11 @@
           <div class="form-group">
             <label class="form-label" for="email">Email Address</label>
             <input type="email" id="email" class="form-input" placeholder="alex@example.com" required autocomplete="email">
-            <div class="form-hint">Your entry pass will be generated immediately.</div>
+            <div class="form-hint">Your pass will be created and displayed on screen instantly.</div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="ticketType">Ticket Type</label>
+            <label class="form-label" for="ticketType">Ticket Tier</label>
             <select id="ticketType" class="form-select">
               <option value="General">General Admission</option>
               <option value="VIP">VIP Access Pass</option>
@@ -438,60 +195,59 @@
           </div>
 
           <button type="submit" class="btn-primary" id="submitBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <polyline points="16 11 18 13 22 9"/>
-            </svg>
-            Complete Registration
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+            Generate Digital Pass
           </button>
         </form>
       </div>
 
+      <!-- Generated VIP Ticket State -->
       <div class="ticket-view" id="ticketView">
-        <div class="ticket-card" id="printablePass">
+        <div class="ticket-container">
           <div class="ticket-top">
             <div class="ticket-badge-row">
-              <span class="badge-pill" id="ticketTypeBadge">General</span>
-              <span class="text-small" style="color: var(--success); font-weight: 600;">Verified Active</span>
+              <span class="badge-vip" id="ticketTypeBadge">VIP ACCESS</span>
+              <span class="badge-status">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                VERIFIED PASS
+              </span>
             </div>
-            <div class="ticket-event-name" id="ticketEventName">Byte Race 2026</div>
+            <div class="ticket-event-name" id="ticketEventName">Byte Race 2026 — Grand Arena</div>
             <div class="ticket-attendee-name" id="ticketAttendeeName">Alex Morgan</div>
             <div class="event-meta">
               <div class="event-meta-row">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
                 <span id="ticketDate">November 1, 2026</span>
               </div>
               <div class="event-meta-row">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span id="ticketVenue">Main Auditorium, VCET Puttur</span>
               </div>
             </div>
+
+            <div class="tear-line"></div>
           </div>
 
           <div class="ticket-body">
-            <div class="qr-container" id="qrContainer"></div>
-            <div class="pass-token-text" id="passTokenDisplay">ID: PG-AUTH-KEY</div>
-            <div class="ticket-instructions">
-              Present this digital pass at the entrance gate for fast contactless verification.
+            <div class="qr-frame">
+              <div id="qrContainer"></div>
             </div>
+            <div>
+              <span class="pass-serial" id="passTokenDisplay">PG-2026-X7K</span>
+            </div>
+            <p class="pass-instructions">
+              Present this QR pass to the gate scanner camera for 1-second contactless verification.
+            </p>
 
             <div class="ticket-actions">
-              <button class="btn-primary" id="downloadPassBtn" onclick="downloadPass()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Pass
+              <!-- Instant Test Gate Scan Button -->
+              <a id="testScanLink" href="./scan.html" class="btn-primary" style="background: #16a34a;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Test Scan This Pass Now
+              </a>
+              <button class="btn-secondary" onclick="window.print()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Download / Print Ticket
               </button>
               <button class="btn-secondary" onclick="resetForm()">
                 Register Another Attendee
@@ -513,33 +269,19 @@
         if (activeEvent) {
           document.getElementById('displayEventName').textContent = activeEvent.name;
           document.getElementById('displayEventVenue').textContent = activeEvent.venue;
-          const dateStr = activeEvent.event_date ? new Date(activeEvent.event_date).toLocaleDateString([], {
-            month: 'long', day: 'numeric', year: 'numeric'
-          }) : 'Date Announced Soon';
-          document.getElementById('displayEventDate').textContent = dateStr;
-
           const remaining = activeEvent.remaining !== undefined
             ? activeEvent.remaining
             : Math.max(0, activeEvent.capacity - (activeEvent.attendee_count || 0));
           document.getElementById('spotsCount').textContent = remaining;
         }
-      } catch (err) {
-        console.error('Failed to load active event:', err);
-      }
+      } catch (e) {}
     }
 
     document.getElementById('regForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
-      const originalText = submitBtn.innerHTML;
-
-      if (!activeEvent) {
-        window.PassGate.showToast('Please wait for event details to load', 'danger');
-        return;
-      }
-
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span>Processing registration...</span>`;
+      submitBtn.innerHTML = '<span>Creating pass...</span>';
 
       const fullName = document.getElementById('fullName').value.trim();
       const email = document.getElementById('email').value.trim();
@@ -547,7 +289,7 @@
 
       try {
         const result = await window.PassGate.registerAttendee({
-          event_id: activeEvent.id,
+          event_id: activeEvent ? activeEvent.id : 'e1-byterace-2026',
           full_name: fullName,
           email,
           ticket_type: ticketType
@@ -555,15 +297,13 @@
 
         if (result && result.attendee) {
           renderTicketPass(result.attendee);
-          window.PassGate.showToast('Pass generated successfully!', 'success');
-        } else {
-          throw new Error('Registration could not be completed.');
+          window.PassGate.showToast('Digital pass created successfully!', 'success');
         }
       } catch (err) {
-        window.PassGate.showToast(err.message || 'Error creating pass. Please try again.', 'danger');
+        window.PassGate.showToast('Error registering. Please try again.', 'danger');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
+        submitBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg> Generate Digital Pass';
       }
     });
 
@@ -571,32 +311,36 @@
       document.getElementById('registrationCard').style.display = 'none';
       document.getElementById('ticketView').style.display = 'block';
 
-      document.getElementById('ticketEventName').textContent = activeEvent.name;
+      document.getElementById('ticketEventName').textContent = activeEvent ? activeEvent.name : 'Byte Race 2026 — Grand Arena';
       document.getElementById('ticketAttendeeName').textContent = attendee.full_name;
-      document.getElementById('ticketTypeBadge').textContent = attendee.ticket_type || 'General';
-      document.getElementById('ticketVenue').textContent = activeEvent.venue;
-      document.getElementById('ticketDate').textContent = activeEvent.event_date
-        ? new Date(activeEvent.event_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })
-        : 'Event Day';
+      document.getElementById('ticketTypeBadge').textContent = (attendee.ticket_type || 'General').toUpperCase();
+      document.getElementById('ticketVenue').textContent = activeEvent ? activeEvent.venue : 'Main Auditorium, VCET Puttur';
+      document.getElementById('passTokenDisplay').textContent = attendee.id;
 
-      const passId = attendee.id || attendee.token;
-      document.getElementById('passTokenDisplay').textContent = `Pass ID: ${passId}`;
+      // Link to instant scan test
+      document.getElementById('testScanLink').href = `./scan.html?testPass=${encodeURIComponent(attendee.id)}`;
 
+      // Generate Clean, Low-Density High-Contrast QR Code
       const qrEl = document.getElementById('qrContainer');
       qrEl.innerHTML = '';
+
+      const qrPayload = window.PassGate.encodePass(attendee, activeEvent ? activeEvent.id : 'e1-byterace-2026');
+
       new QRCode(qrEl, {
-        text: JSON.stringify({ id: passId, event_id: activeEvent.id }),
-        width: 180,
-        height: 180,
+        text: qrPayload,
+        width: 170,
+        height: 170,
         colorDark: '#0f172a',
         colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
+        correctLevel: QRCode.CorrectLevel.M
       });
-    }
 
-    function downloadPass() {
-      window.print();
-      window.PassGate.showToast('Pass downloaded successfully');
+      // Save as latest pass for scanner quick-select
+      localStorage.setItem('passgate_last_registered', JSON.stringify({
+        id: attendee.id,
+        name: attendee.full_name,
+        type: attendee.ticket_type
+      }));
     }
 
     function resetForm() {
