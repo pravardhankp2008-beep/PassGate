@@ -20,7 +20,7 @@
     }
   }
 
-  // Pre-seeded Active Event for Byte Race 2026
+  // Canonical Official Event for Byte Race 2026
   const DEFAULT_EVENT = {
     id: 'e1-byterace-2026',
     name: 'Byte Race 2026 — Grand Arena',
@@ -31,61 +31,11 @@
     created_at: new Date().toISOString()
   };
 
-  const DEFAULT_SEED_EVENTS = [
-    DEFAULT_EVENT,
-    {
-      id: 'e2-web3-ai',
-      name: 'Web3 & AI Agentic Hackathon',
-      venue: 'Innovation Lab 4, Computer Science Block',
-      event_date: '2026-11-03T10:00:00.000Z',
-      capacity: 80,
-      is_active: false,
-      created_at: new Date().toISOString()
-    }
-  ];
+  // Strictly only the official active event — all test/obsolete events purged
+  const DEFAULT_SEED_EVENTS = [DEFAULT_EVENT];
 
-  const DEFAULT_SEED_ATTENDEES = [
-    {
-      id: 'PG-2026-ALEX',
-      event_id: 'e1-byterace-2026',
-      full_name: 'Alex Morgan',
-      email: 'alex.morgan@vcet.edu',
-      ticket_type: 'VIP',
-      checked_in: true,
-      checked_in_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-      created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'PG-2026-SARAH',
-      event_id: 'e1-byterace-2026',
-      full_name: 'Sarah Jenkins',
-      email: 'sarah.j@techhub.org',
-      ticket_type: 'General',
-      checked_in: false,
-      checked_in_at: null,
-      created_at: new Date(Date.now() - 50 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'PG-2026-PRIYA',
-      event_id: 'e1-byterace-2026',
-      full_name: 'Priya Sharma',
-      email: 'priya.sharma@bytefest.net',
-      ticket_type: 'VIP',
-      checked_in: true,
-      checked_in_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-      created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-    },
-    {
-      id: 'PG-2026-DAVID',
-      event_id: 'e1-byterace-2026',
-      full_name: 'David Chen',
-      email: 'david.chen@innovate.io',
-      ticket_type: 'General',
-      checked_in: false,
-      checked_in_at: null,
-      created_at: new Date(Date.now() - 20 * 60 * 1000).toISOString()
-    }
-  ];
+  // Fresh starting state: 0 initial attendees
+  const DEFAULT_SEED_ATTENDEES = [];
 
   function getStorage(key, fallback) {
     try {
@@ -94,7 +44,35 @@
         localStorage.setItem(key, JSON.stringify(fallback));
         return fallback;
       }
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+
+      // Sanitize stored events: purge any obsolete test events
+      if (key === 'passgate_events') {
+        if (!Array.isArray(parsed)) {
+          localStorage.setItem(key, JSON.stringify(fallback));
+          return fallback;
+        }
+        const cleaned = parsed.filter(e => e.id === 'e1-byterace-2026' || e.id === 1);
+        if (cleaned.length === 0) {
+          localStorage.setItem(key, JSON.stringify(fallback));
+          return fallback;
+        }
+        localStorage.setItem(key, JSON.stringify(cleaned));
+        return cleaned;
+      }
+
+      // Sanitize stored attendees: purge entries from obsolete events
+      if (key === 'passgate_attendees') {
+        if (!Array.isArray(parsed)) {
+          localStorage.setItem(key, JSON.stringify(fallback));
+          return fallback;
+        }
+        const cleaned = parsed.filter(a => a.event_id === 'e1-byterace-2026' || a.event_id === 1);
+        localStorage.setItem(key, JSON.stringify(cleaned));
+        return cleaned;
+      }
+
+      return parsed;
     } catch (e) {
       return fallback;
     }
@@ -242,6 +220,36 @@
     },
 
     /**
+     * Policy & Compliance State
+     */
+    hasAcceptedAttendeeTerms() {
+      return localStorage.getItem('passgate_attendee_terms_accepted') === 'true';
+    },
+
+    setAttendeeTermsAccepted(accepted = true) {
+      localStorage.setItem('passgate_attendee_terms_accepted', accepted ? 'true' : 'false');
+    },
+
+    hasAcceptedAdminPolicy() {
+      return localStorage.getItem('passgate_admin_policy_accepted') === 'true';
+    },
+
+    setAdminPolicyAccepted(accepted = true) {
+      localStorage.setItem('passgate_admin_policy_accepted', accepted ? 'true' : 'false');
+    },
+
+    /**
+     * Reset Demo Data (Completely clean slate for fresh testing)
+     */
+    resetDemoData() {
+      localStorage.removeItem('passgate_events');
+      localStorage.removeItem('passgate_attendees');
+      localStorage.removeItem('passgate_last_registered');
+      checkedInRegistry.clear();
+      this.showToast('App data refreshed to clean state.', 'success');
+    },
+
+    /**
      * Get All Events with Calculated Turnout
      */
     async getEvents() {
@@ -278,12 +286,17 @@
         const res = await fetch('/api/events');
         if (res.ok) {
           const data = await res.json();
-          return data.map(ev => ({
-            ...ev,
-            event_date: ev.date || ev.event_date,
-            remaining: Math.max(0, ev.capacity - (ev.attendee_count || 0)),
-            turnout_pct: ev.capacity > 0 ? Math.round(((ev.checked_in_count || 0) / ev.capacity) * 100) : 0
-          }));
+          const list = data.events || data;
+          if (Array.isArray(list) && list.length > 0) {
+            return list.map(ev => ({
+              ...ev,
+              event_date: ev.date || ev.event_date,
+              attendee_count: ev.total_registered !== undefined ? ev.total_registered : (ev.attendee_count || 0),
+              checked_in_count: ev.total_checked_in !== undefined ? ev.total_checked_in : (ev.checked_in_count || 0),
+              remaining: ev.remaining_capacity !== undefined ? ev.remaining_capacity : Math.max(0, ev.capacity - (ev.attendee_count || 0)),
+              turnout_pct: ev.turnout_percentage !== undefined ? ev.turnout_percentage : (ev.capacity > 0 ? Math.round(((ev.checked_in_count || 0) / ev.capacity) * 100) : 0)
+            }));
+          }
         }
       } catch (e) {}
 
@@ -351,7 +364,7 @@
           return {
             success: true,
             attendee: {
-              id: data.attendee.token || serial,
+              id: data.attendee?.token || serial,
               full_name,
               email,
               ticket_type,
