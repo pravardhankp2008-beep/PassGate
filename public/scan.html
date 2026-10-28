@@ -3,129 +3,160 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>PassGate | Staff QR Scanner & Check-In</title>
+  <title>PassGate — Check-in</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><path d='M7 8h10'/><path d='M7 12h10'/><path d='M7 16h6'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/hydroglass.css">
-  
-  <!-- html5-qrcode library -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="./supabaseClient.js"></script>
 
   <style>
+    :root {
+      --bg: #090d16;
+      --surface: #0f172a;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #1e293b;
+      --primary: #6366f1;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 1.5rem 1rem;
-      overflow-x: hidden;
     }
 
     .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
       width: 100%;
-      max-width: 540px;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
     }
 
-    /* Header */
-    .header {
+    .pinned-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+
+    .header-inner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.25rem 0.5rem;
+      gap: 16px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-sans);
-      font-weight: 800;
-      font-size: 1.35rem;
-      letter-spacing: -0.03em;
-      color: var(--text-main);
+      gap: 10px;
       text-decoration: none;
-    }
-
-    .brand span {
-      background: linear-gradient(135deg, #00677d 0%, #00c2e8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    /* Auth Required Card */
-    #authCard {
-      padding: 2.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .auth-header h2 {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--text-main);
-    }
-
-    .auth-header p {
-      font-size: 0.875rem;
-      color: var(--text-sub);
-      margin-top: 0.35rem;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    label {
-      font-size: 0.75rem;
+      color: var(--text);
       font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-sub);
-      font-family: var(--font-mono);
-      letter-spacing: 0.04em;
+      font-size: 16px;
     }
 
-    .hint-box {
-      background: rgba(0, 194, 232, 0.08);
-      border: 1px dashed rgba(0, 194, 232, 0.35);
-      border-radius: var(--radius-md);
-      padding: 0.75rem 1rem;
-      font-size: 0.8rem;
-      color: #00677d;
-      font-family: var(--font-mono);
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 6px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-weight: 600;
+      justify-content: center;
     }
 
-    /* Scanner Interface */
-    #scannerSection {
-      display: none;
+    .mini-counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+    }
+
+    .header-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .15s;
+    }
+
+    .header-links a:hover {
+      color: var(--text);
+    }
+
+    .scanner-main {
+      flex: 1;
+      padding: 32px 0 48px;
+      display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      align-items: center;
     }
 
-    .scanner-viewport-card {
-      background: #0d0e1e;
-      border: 1.5px solid rgba(255, 255, 255, 0.9);
-      border-radius: var(--radius-xl);
-      overflow: hidden;
+    .scanner-card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .viewfinder-wrapper {
       position: relative;
-      box-shadow: var(--shadow-elevation-3);
+      width: 100%;
+      min-height: 320px;
+      background: #020617;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #reader {
@@ -134,633 +165,368 @@
     }
 
     #reader video {
-      border-radius: var(--radius-lg);
-      object-fit: cover !important;
+      border-radius: 8px;
+      object-fit: cover;
+      width: 100% !important;
     }
 
-    /* Laser Reticle Overlay */
-    .scan-reticle {
+    .reticle-box {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 220px;
-      height: 220px;
-      border: 2px solid rgba(0, 194, 232, 0.7);
-      border-radius: var(--radius-lg);
+      width: 200px;
+      height: 200px;
       pointer-events: none;
-      box-shadow: 0 0 0 9999px rgba(13, 14, 30, 0.45);
+      border: 2px dashed rgba(255, 255, 255, 0.4);
+      border-radius: 12px;
+      z-index: 2;
     }
 
-    .scan-reticle::before {
-      content: '';
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      height: 2.5px;
-      background: #00c2e8;
-      box-shadow: 0 0 12px 3px rgba(0, 194, 232, 0.8);
-      animation: scanLaser 2s infinite ease-in-out alternate;
-    }
-
-    @keyframes scanLaser {
-      0% { top: 12%; }
-      100% { top: 88%; }
-    }
-
-    /* Scanner Status bar */
-    .scanner-controls {
+    .scan-status-strip {
+      margin-top: 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.85rem 1.25rem;
+      font-size: 13px;
+      color: var(--muted);
     }
 
-    .status-indicator {
+    .manual-entry {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .manual-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .manual-form {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-family: var(--font-mono);
-      color: #006b5d;
-      font-size: 0.8rem;
-      font-weight: 700;
+      gap: 8px;
     }
 
-    /* Manual Token Fallback */
-    .manual-box {
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .manual-input-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .manual-input-row input {
+    .manual-input {
       flex: 1;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
+      height: 44px;
+      padding: 0 14px;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
     }
 
-    /* Scan History Feed */
-    .history-card {
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+    .manual-input:focus {
+      border-color: var(--primary);
     }
 
-    .history-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      font-family: var(--font-mono);
-      letter-spacing: 0.04em;
-    }
-
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      max-height: 190px;
-      overflow-y: auto;
-    }
-
-    .history-item {
-      display: flex;
+    .btn-verify {
+      height: 44px;
+      background: var(--primary);
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      background: rgba(255, 255, 255, 0.75);
-      border: 1px solid rgba(226, 224, 248, 0.9);
-      padding: 0.7rem 1rem;
-      border-radius: var(--radius-md);
-      font-size: 0.85rem;
-      box-shadow: 0 2px 6px rgba(45, 49, 78, 0.03);
+      gap: 6px;
+      transition: opacity .15s;
     }
 
-    .badge-tag {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.2rem 0.55rem;
-      border-radius: var(--radius-pill);
-      text-transform: uppercase;
+    .btn-verify:hover {
+      opacity: 0.9;
     }
 
-    .badge-valid { background: rgba(0, 200, 175, 0.15); color: #006b5d; border: 1px solid rgba(0, 200, 175, 0.35); }
-    .badge-used { background: rgba(245, 158, 11, 0.15); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); }
-    .badge-invalid { background: rgba(186, 26, 26, 0.15); color: #93000a; border: 1px solid rgba(186, 26, 26, 0.35); }
-
-    /* ========================================================
-       FULL SCREEN FEEDBACK OVERLAYS
-       ======================================================== */
-    #feedbackOverlay {
+    .feedback-overlay {
       position: fixed;
       inset: 0;
-      z-index: 9999;
-      display: none;
+      z-index: 999;
+      display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2.5rem;
+      padding: 32px;
       text-align: center;
-      animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    @keyframes popIn {
-      0% { transform: scale(0.92); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+    .feedback-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
     }
 
-    /* Valid Green */
-    #feedbackOverlay.state-valid {
-      background: radial-gradient(circle at center, #00c8af 0%, #009e8b 55%, #004e43 100%);
+    .feedback-overlay.success {
+      background: #15803d;
       color: #ffffff;
     }
 
-    /* Already Used Amber/Red */
-    #feedbackOverlay.state-used {
-      background: radial-gradient(circle at center, #ea580c 0%, #c2410c 55%, #7c2d12 100%);
-      color: #ffffff;
-    }
-
-    /* Invalid Red */
-    #feedbackOverlay.state-invalid {
-      background: radial-gradient(circle at center, #ba1a1a 0%, #93000a 60%, #450a0a 100%);
+    .feedback-overlay.danger {
+      background: #b91c1c;
       color: #ffffff;
     }
 
     .feedback-icon {
-      font-size: 5rem;
-      line-height: 1;
-      margin-bottom: 1.25rem;
-      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35));
-    }
-
-    .feedback-title {
-      font-size: 2.4rem;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      text-transform: uppercase;
-      font-family: var(--font-sans);
-      margin-bottom: 0.5rem;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
     }
 
     .feedback-name {
-      font-size: 1.85rem;
-      font-weight: 800;
-      margin-bottom: 0.85rem;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
     }
 
     .feedback-badge {
       display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
-      font-weight: 800;
-      padding: 0.4rem 1.4rem;
-      border-radius: var(--radius-pill);
-      background: rgba(255, 255, 255, 0.22);
-      border: 1.5px solid rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(10px);
-      margin-bottom: 1.25rem;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 16px;
     }
 
-    .feedback-meta {
-      font-size: 1rem;
-      font-family: var(--font-mono);
-      background: rgba(0, 0, 0, 0.2);
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius-md);
-      backdrop-filter: blur(8px);
+    .feedback-msg {
+      font-size: 16px;
+      opacity: 0.95;
+      max-width: 400px;
+      line-height: 1.5;
     }
 
-    .auto-resume-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.9);
-      width: 100%;
-      animation: countdown 2s linear forwards;
-    }
-
-    @keyframes countdown {
-      0% { width: 100%; }
-      100% { width: 0%; }
+    .feedback-dismiss-hint {
+      margin-top: 32px;
+      font-size: 13px;
+      opacity: 0.75;
     }
   </style>
 </head>
-<body class="hydroglass-theme">
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <a href="/" class="brand">
-        PASS<span>GATE</span>
+<body>
+
+  <header class="pinned-header">
+    <div class="container header-inner">
+      <a href="./index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M7 8h10"/>
+            <path d="M7 12h10"/>
+            <path d="M7 16h6"/>
+          </svg>
+        </div>
+        PassGate Scanner
       </a>
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <span class="tactile-badge badge-cyan">
-          <span class="badge-dot badge-dot-cyan"></span>
-          SUPABASE
-        </span>
-        <div id="staffStatusBadge">
-          <span class="tactile-badge badge-neutral">
-            <span>🔒 STAFF GATEWAY</span>
-          </span>
-        </div>
-      </div>
-    </header>
 
-    <!-- 1. Staff Authentication Card -->
-    <section class="glass-panel" id="authCard">
-      <div class="auth-header">
-        <h2>Gate Staff Login</h2>
-        <p>Authenticate with staff credentials to activate the high-speed camera scanner engine.</p>
+      <div class="mini-counter">
+        <div class="live-dot"></div>
+        <span id="miniCounterText">Live Turnout: Syncing...</span>
       </div>
 
-      <form id="loginForm" style="display: flex; flex-direction: column; gap: 1.15rem;">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" class="tactile-input" value="staff" required autofocus>
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" class="tactile-input" value="password123" required>
-        </div>
-
-        <button type="submit" class="btn-tactile-primary" id="loginBtn" style="width: 100%;">
-          <span>Authorize Staff Scanner</span>
-          <span>⚡</span>
-        </button>
-
-        <div class="hint-box">
-          <span>Default: staff / password123</span>
-          <button type="button" id="quickFillBtn" style="background:none; border:none; color:var(--primary); font-family:var(--font-sans); font-weight:700; cursor:pointer;">Quick Fill</button>
-        </div>
-      </form>
-    </section>
-
-    <!-- 2. Active Scanner Section -->
-    <section id="scannerSection">
-      <!-- Camera Preview -->
-      <div class="scanner-viewport-card">
-        <div id="reader"></div>
-        <div class="scan-reticle"></div>
+      <div class="header-links">
+        <a href="./admin.html">Dashboard</a>
       </div>
+    </div>
+  </header>
 
-      <!-- Controls & Status -->
-      <div class="glass-panel scanner-controls">
-        <div class="status-indicator">
-          <span class="badge-dot badge-dot-mint animate-pulse-subtle"></span>
-          <span id="scannerStatusText">CAMERA SCANNING ACTIVE</span>
+  <main class="scanner-main">
+    <div class="container" style="display: flex; justify-content: center;">
+      <div class="scanner-card">
+        <div class="viewfinder-wrapper">
+          <div id="reader"></div>
+          <div class="reticle-box"></div>
         </div>
-        <button type="button" class="btn-tactile-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.75rem;" id="logoutBtn">
-          Logout
-        </button>
-      </div>
 
-      <!-- Manual Code Entry Fallback -->
-      <div class="glass-panel manual-box">
-        <label for="manualToken">Manual Token Entry (Scanner Fallback)</label>
-        <div class="manual-input-row">
-          <input type="text" id="manualToken" class="tactile-input" placeholder="Paste 32-char hex token...">
-          <button type="button" class="btn-tactile-primary" id="manualSubmitBtn" style="padding: 0 1.25rem;">Verify</button>
+        <div class="scan-status-strip">
+          <span id="scannerStatusText">Camera standby... Align ticket QR</span>
+          <span style="font-family: monospace;">Supabase Active</span>
+        </div>
+
+        <div class="manual-entry">
+          <label class="manual-label" for="manualToken">Manual Ticket ID Entry</label>
+          <form class="manual-form" id="manualForm">
+            <input type="text" id="manualToken" class="manual-input" placeholder="Paste or type Pass ID..." required>
+            <button type="submit" class="btn-verify">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Verify
+            </button>
+          </form>
         </div>
       </div>
+    </div>
+  </main>
 
-      <!-- Live Scan History Feed -->
-      <div class="glass-panel history-card">
-        <div class="history-header">
-          <span>Recent Scans in this Session</span>
-          <span id="scanCountText" style="color: var(--primary);">0 Scanned</span>
-        </div>
-        <div class="history-list" id="historyList">
-          <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:0.75rem;">
-            Awaiting first QR code scan...
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- Full-Screen Feedback Overlay -->
-  <div id="feedbackOverlay">
-    <div class="feedback-icon" id="fbIcon">✅</div>
-    <div class="feedback-title" id="fbTitle">VALID PASS</div>
-    <div class="feedback-name" id="fbName">Alex Rivers</div>
-    <div class="feedback-badge" id="fbBadge">VIP PASS</div>
-    <div class="feedback-meta" id="fbMeta">Checked in at: 10:45 AM</div>
-    <div class="auto-resume-bar"></div>
+  <div class="feedback-overlay" id="feedbackOverlay" onclick="dismissOverlay()">
+    <div class="feedback-icon" id="feedbackIcon"></div>
+    <div class="feedback-name" id="feedbackName">Attendee Name</div>
+    <span class="feedback-badge" id="feedbackBadge">General</span>
+    <div class="feedback-msg" id="feedbackMsg">Validation message</div>
+    <div class="feedback-dismiss-hint">Tap anywhere to scan next</div>
   </div>
 
   <script>
-    // State
-    let html5QrCode = null;
     let isProcessing = false;
-    let resumeTimer = null;
-    let scanCount = 0;
+    let html5QrCode = null;
+    let currentEvent = null;
 
-    // Web Audio Synthesizer for High-Speed Audio Feedback
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playSound(type) {
-      if (!audioCtx) return;
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      const now = audioCtx.currentTime;
-
-      if (type === 'valid') {
-        // High double-beep (chime)
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880, now + 0.1); // A5
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-        osc.start(now);
-        osc.stop(now + 0.3);
-      } else if (type === 'used') {
-        // Low double-buzz
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.setValueAtTime(180, now + 0.12);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-        osc.start(now);
-        osc.stop(now + 0.35);
-      } else {
-        // Low error buzz
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(140, now);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-        osc.start(now);
-        osc.stop(now + 0.4);
-      }
-    }
-
-    // Check staff session on startup
-    async function checkStaffAuth() {
+    async function refreshTurnoutCounter() {
       try {
-        const res = await fetch('/api/staff/me');
-        if (res.ok) {
-          const data = await res.json();
-          onStaffAuthenticated(data.staff);
-        } else {
-          showAuthCard();
+        const events = await window.PassGate.getEvents();
+        if (events && events.length > 0) {
+          currentEvent = events.find(e => e.is_active) || events[0];
+          const reg = currentEvent.attendee_count || 0;
+          const chk = currentEvent.checked_in_count || 0;
+          const rem = Math.max(0, currentEvent.capacity - reg);
+          document.getElementById('miniCounterText').textContent =
+            `Registered ${reg} · Checked In ${chk} · Remaining ${rem}`;
         }
-      } catch {
-        showAuthCard();
-      }
+      } catch (err) {}
     }
 
-    function showAuthCard() {
-      document.getElementById('authCard').style.display = 'flex';
-      document.getElementById('scannerSection').style.display = 'none';
-      document.getElementById('staffStatusBadge').innerHTML = '<span class="tactile-badge badge-neutral">🔒 STAFF LOGIN REQUIRED</span>';
+    refreshTurnoutCounter();
+    setInterval(refreshTurnoutCounter, 2500);
+
+    function startCamera() {
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          handleScan(decodedText);
+        },
+        (errorMessage) => {}
+      ).catch(err => {
+        document.getElementById('scannerStatusText').textContent = 'Camera unavailable. Please use manual entry below.';
+      });
     }
 
-    function onStaffAuthenticated(staff) {
-      document.getElementById('authCard').style.display = 'none';
-      document.getElementById('scannerSection').style.display = 'flex';
-      document.getElementById('staffStatusBadge').innerHTML = `
-        <span class="tactile-badge badge-mint">
-          <span class="badge-dot badge-dot-mint"></span>
-          @${staff.username} (${staff.role})
-        </span>
-      `;
-      startCameraScanner();
-    }
-
-    // Staff Login Form Submit
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const loginBtn = document.getElementById('loginBtn');
-      loginBtn.disabled = true;
-      loginBtn.innerHTML = '<span>Verifying...</span> <span>⏳</span>';
-
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || 'Authentication failed');
-        }
-
-        // Store token in localStorage as backup for non-cookie environments
-        if (data.token) {
-          localStorage.setItem('passgate_staff_token', data.token);
-        }
-
-        onStaffAuthenticated(data.staff);
-      } catch (err) {
-        alert(err.message);
-      } finally {
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '<span>Authorize Staff Scanner</span> <span>⚡</span>';
-      }
-    });
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      if (html5QrCode) {
-        try { await html5QrCode.stop(); } catch {}
-      }
-      localStorage.removeItem('passgate_staff_token');
-      await fetch('/api/logout', { method: 'POST' });
-      window.location.reload();
-    });
-
-    // Quick Fill helper
-    document.getElementById('quickFillBtn').addEventListener('click', () => {
-      document.getElementById('username').value = 'staff';
-      document.getElementById('password').value = 'password123';
-    });
-
-    // Start rear-camera continuous QR scanner
-    async function startCameraScanner() {
-      if (html5QrCode) return;
-
-      try {
-        html5QrCode = new Html5Qrcode('reader');
-
-        const config = {
-          fps: 15,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0
-        };
-
-        await html5QrCode.start(
-          { facingMode: 'environment' },
-          config,
-          onScanSuccess,
-          () => {} // Ignore scan failure frames
-        );
-      } catch (err) {
-        console.warn('Camera auto-start notice:', err);
-        document.getElementById('scannerStatusText').textContent = 'CAMERA UNAVAILABLE (USE MANUAL TOKEN)';
-      }
-    }
-
-    // Handle Decoded QR code
-    async function onScanSuccess(decodedText) {
+    async function handleScan(payload) {
       if (isProcessing) return;
       isProcessing = true;
 
-      // Check in token
-      await executeCheckin(decodedText);
-    }
-
-    // Manual token submit
-    document.getElementById('manualSubmitBtn').addEventListener('click', () => {
-      const token = document.getElementById('manualToken').value.trim();
-      if (!token) return;
-      executeCheckin(token);
-      document.getElementById('manualToken').value = '';
-    });
-
-    // Checkin API Call
-    async function executeCheckin(token) {
-      document.getElementById('scannerStatusText').textContent = 'VERIFYING TICKET TOKEN...';
+      document.getElementById('scannerStatusText').textContent = 'Processing validation...';
 
       try {
-        // Optional Bearer token header if cookie is blocked
-        const storedToken = localStorage.getItem('passgate_staff_token');
-        const headers = { 'Content-Type': 'application/json' };
-        if (storedToken) {
-          headers['Authorization'] = `Bearer ${storedToken}`;
+        const result = await window.PassGate.validateCheckIn(payload);
+
+        if (result.success) {
+          triggerSuccessState(result.attendee);
+        } else if (result.reason === 'already_used') {
+          triggerDuplicateState(result.attendee, result.message);
+        } else {
+          triggerInvalidState(result.message || 'Pass not recognized in registry');
         }
-
-        const res = await fetch('/api/checkin', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ token })
-        });
-
-        const data = await res.json();
-        handleCheckinResult(data, token);
       } catch (err) {
-        handleCheckinResult({ status: 'invalid', message: 'Network connection failure.' }, token);
+        triggerInvalidState('Network interruption occurred during check-in');
+      } finally {
+        refreshTurnoutCounter();
       }
     }
 
-    // Full-Screen Feedback States
-    function handleCheckinResult(res, token) {
+    function triggerSuccessState(attendee) {
+      window.PassGate.playTone('success');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
       const overlay = document.getElementById('feedbackOverlay');
-      const icon = document.getElementById('fbIcon');
-      const title = document.getElementById('fbTitle');
-      const name = document.getElementById('fbName');
-      const badge = document.getElementById('fbBadge');
-      const meta = document.getElementById('fbMeta');
+      overlay.className = 'feedback-overlay success active';
 
-      overlay.className = '';
-
-      if (res.status === 'valid') {
-        // 1. VALID PASS (GREEN / BIO-MINT)
-        overlay.classList.add('state-valid');
-        icon.textContent = '✅';
-        title.textContent = 'VALID ENTRY';
-        name.textContent = res.name || 'Verified Attendee';
-        badge.textContent = (res.ticketType || 'GENERAL') + ' PASS';
-        meta.textContent = `Event: ${res.eventName || 'Byte Race 2026'} • Just Now`;
-
-        playSound('valid');
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        recordHistoryItem(res.name, res.ticketType, 'valid', token);
-
-      } else if (res.status === 'used') {
-        // 2. ALREADY USED (ORANGE/AMBER)
-        overlay.classList.add('state-used');
-        icon.textContent = '⚠️';
-        title.textContent = 'ALREADY CHECKED IN';
-        name.textContent = res.name || 'Attendee';
-        badge.textContent = (res.ticketType || 'GENERAL') + ' PASS';
-        meta.textContent = `Previously Scanned at: ${res.checked_in_at || 'Earlier'}`;
-
-        playSound('used');
-        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-        recordHistoryItem(res.name, res.ticketType, 'used', token);
-
-      } else {
-        // 3. INVALID (RED)
-        overlay.classList.add('state-invalid');
-        icon.textContent = '⛔';
-        title.textContent = 'INVALID PASS';
-        name.textContent = 'Unrecognized Token';
-        badge.textContent = 'ACCESS DENIED';
-        meta.textContent = res.message || 'Token does not exist in event registry.';
-
-        playSound('invalid');
-        if (navigator.vibrate) navigator.vibrate(400);
-        recordHistoryItem('Unknown', 'Invalid', 'invalid', token);
-      }
-
-      // Display Full-Screen Overlay
-      overlay.style.display = 'flex';
-
-      // Auto-resume after 2 seconds
-      clearTimeout(resumeTimer);
-      resumeTimer = setTimeout(() => {
-        dismissFeedback();
-      }, 2000);
-    }
-
-    // Dismiss overlay and resume camera
-    function dismissFeedback() {
-      clearTimeout(resumeTimer);
-      document.getElementById('feedbackOverlay').style.display = 'none';
-      document.getElementById('scannerStatusText').textContent = 'CAMERA SCANNING ACTIVE';
-      isProcessing = false;
-    }
-
-    // Tap anywhere on overlay to dismiss immediately
-    document.getElementById('feedbackOverlay').addEventListener('click', dismissFeedback);
-
-    // Add entry to history feed
-    function recordHistoryItem(name, ticketType, status, token) {
-      scanCount++;
-      document.getElementById('scanCountText').textContent = `${scanCount} Scanned`;
-
-      const list = document.getElementById('historyList');
-      if (scanCount === 1) list.innerHTML = '';
-
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-      const item = document.createElement('div');
-      item.className = 'history-item';
-      item.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:0.15rem;">
-          <strong style="color:var(--text-main); font-weight:700;">${name}</strong>
-          <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">${token.substring(0, 12)}... • ${timeStr}</span>
-        </div>
-        <span class="badge-tag badge-${status}">${status.toUpperCase()}</span>
+      document.getElementById('feedbackIcon').innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
       `;
+      document.getElementById('feedbackName').textContent = attendee.full_name || 'Verified Attendee';
+      document.getElementById('feedbackBadge').textContent = attendee.ticket_type || 'General Pass';
+      document.getElementById('feedbackBadge').style.display = 'inline-block';
+      document.getElementById('feedbackMsg').textContent = 'Valid ticket. Entry approved.';
 
-      list.prepend(item);
+      autoDismissTimer = setTimeout(dismissOverlay, 3500);
     }
 
-    // Start authentication check
-    checkStaffAuth();
+    function triggerDuplicateState(attendee, message) {
+      window.PassGate.playTone('danger');
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+      const overlay = document.getElementById('feedbackOverlay');
+      overlay.className = 'feedback-overlay danger active';
+
+      document.getElementById('feedbackIcon').innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      `;
+      document.getElementById('feedbackName').textContent = attendee ? attendee.full_name : 'Duplicate Scan';
+      document.getElementById('feedbackBadge').textContent = 'Access Denied';
+      document.getElementById('feedbackBadge').style.display = 'inline-block';
+      document.getElementById('feedbackMsg').textContent = message || 'Ticket was already scanned earlier.';
+
+      autoDismissTimer = setTimeout(dismissOverlay, 3500);
+    }
+
+    function triggerInvalidState(message) {
+      window.PassGate.playTone('danger');
+      if (navigator.vibrate) navigator.vibrate([300]);
+
+      const overlay = document.getElementById('feedbackOverlay');
+      overlay.className = 'feedback-overlay danger active';
+
+      document.getElementById('feedbackIcon').innerHTML = `
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      `;
+      document.getElementById('feedbackName').textContent = 'Invalid Ticket';
+      document.getElementById('feedbackBadge').style.display = 'none';
+      document.getElementById('feedbackMsg').textContent = message;
+
+      autoDismissTimer = setTimeout(dismissOverlay, 3500);
+    }
+
+    let autoDismissTimer = null;
+    function dismissOverlay() {
+      clearTimeout(autoDismissTimer);
+      const overlay = document.getElementById('feedbackOverlay');
+      overlay.classList.remove('active');
+      document.getElementById('scannerStatusText').textContent = 'Camera ready. Waiting for pass...';
+      setTimeout(() => {
+        isProcessing = false;
+      }, 500);
+    }
+
+    document.getElementById('manualForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('manualToken').value.trim();
+      if (val) {
+        handleScan(val);
+        document.getElementById('manualToken').value = '';
+      }
+    });
+
+    window.addEventListener('load', () => {
+      startCamera();
+    });
   </script>
 </body>
 </html>

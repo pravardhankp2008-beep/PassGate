@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassGate — Check-in</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='16' rx='2'/><path d='M7 8h10'/><path d='M7 12h10'/><path d='M7 16h6'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabaseClient.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #4f46e5;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .text-heading { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+    .text-body { font-size: 16px; line-height: 1.5; }
+    .text-small { font-size: 13px; line-height: 1.4; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dashboard-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .whatsapp-sidebar {
+      width: 340px;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-search-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+
+    .sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .event-thread-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background .15s;
+      position: relative;
+    }
+
+    .event-thread-row:hover { background: #f8fafc; }
+    .event-thread-row.active { background: #eff6ff; border-left: 4px solid var(--primary); }
+
+    .thread-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #ede9fe;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .thread-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .thread-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+
+    .thread-venue {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .thread-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .thread-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: #f1f5f9;
+      color: var(--muted);
+    }
+
+    .thread-badge.active-badge {
+      background: #dcfce7;
+      color: var(--success);
+    }
+
+    .main-viewport {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    .zoom-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .zoom-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .zoom-event-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zoom-event-sub {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .zoom-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(79,70,229,.35);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background .15s;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+
+    .live-sync-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 9999px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+    }
+
+    .dashboard-content {
+      padding: 24px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-val {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .progress-section-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 20px 24px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .ring-wrapper {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      flex-shrink: 0;
+    }
+
+    .ring-center-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-percentage {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ring-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .capacity-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stepper-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .stepper-btn:hover { background: #e2e8f0; }
+
+    .table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-header-bar {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text);
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    tr:nth-child(even) td { background: #fbfcfe; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.checked-in { background: #dcfce7; color: var(--success); }
+    .status-badge.pending { background: #f1f5f9; color: var(--muted); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-body { padding: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .form-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .dashboard-layout { flex-direction: column; }
+      .whatsapp-sidebar { width: 100%; height: 180px; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .progress-section-card { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <a href="./index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M7 8h10"/>
+            <path d="M7 12h10"/>
+            <path d="M7 16h6"/>
+          </svg>
+        </div>
+        PassGate Admin
+      </a>
+      <div class="live-sync-indicator">
+        <div class="live-dot"></div>
+        <span>Live (2s sync)</span>
+      </div>
+    </div>
+    <div class="header-right" style="display: flex; gap: 12px;">
+      <a href="./scan.html" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M7 7h.01M7 17h.01M17 7h.01M17 17h.01"/>
+        </svg>
+        Open Scanner
+      </a>
+      <a href="./register.html" class="btn-secondary">Registration Portal</a>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+
+    <aside class="whatsapp-sidebar">
+      <div class="sidebar-search-header">
+        <span class="sidebar-title">Events Portfolio</span>
+        <button class="btn-primary" style="padding: 6px 10px; font-size: 12px;" onclick="openNewEventModal()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          New
+        </button>
+      </div>
+
+      <div class="sidebar-list" id="sidebarList"></div>
+    </aside>
+
+    <main class="main-viewport">
+
+      <div class="zoom-header">
+        <div class="zoom-title-area">
+          <div class="zoom-event-title">
+            <span id="activeEventName">Select an event</span>
+            <span id="activeStatusPill" class="thread-badge active-badge" style="display: none;">ACTIVE</span>
+          </div>
+          <div class="zoom-event-sub">
+            <span id="activeEventVenue">Venue</span>
+            <span>&middot;</span>
+            <span id="activeEventDate">Date</span>
+          </div>
+        </div>
+
+        <div class="zoom-actions">
+          <button class="btn-secondary" id="setActiveBtn" onclick="toggleActiveStatus()">
+            Set as Active
+          </button>
+          <button class="btn-secondary" onclick="exportCSV()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export CSV
+          </button>
+          <button class="btn-primary" onclick="openNewEventModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Create New Event
+          </button>
+        </div>
+      </div>
+
+      <div class="dashboard-content">
+
+        <div class="metrics-grid">
+          <div class="card metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Total Registered</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div class="metric-val" id="metricRegistered">0</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Checked In</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div class="metric-val" id="metricCheckedIn">0</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Remaining Inventory</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+              </svg>
+            </div>
+            <div class="metric-val" id="metricRemaining">0</div>
+          </div>
+
+          <div class="card metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Turnout Percentage</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2">
+                <line x1="19" y1="5" x2="5" y2="19"/>
+                <circle cx="6.5" cy="6.5" r="2.5"/>
+                <circle cx="17.5" cy="17.5" r="2.5"/>
+              </svg>
+            </div>
+            <div class="metric-val" id="metricTurnout">0%</div>
+          </div>
+        </div>
+
+        <div class="progress-section-card">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="ring-wrapper">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="46" stroke="#f1f5f9" stroke-width="8" fill="none"/>
+                <circle id="turnoutRing" cx="55" cy="55" r="46" stroke="var(--primary)" stroke-width="8" stroke-linecap="round" fill="none"
+                  stroke-dasharray="289" stroke-dashoffset="289" style="transition: stroke-dashoffset 0.6s ease; transform: rotate(-90deg); transform-origin: 50% 50%;" />
+              </svg>
+              <div class="ring-center-text">
+                <span class="ring-percentage" id="ringPercentageText">0%</span>
+                <span class="ring-label">Turnout</span>
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Live Gate Velocity</div>
+              <div class="text-small" style="color: var(--muted); max-width: 320px;">
+                Occupancy tracking synchronizes automatically across Supabase realtime channels.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--muted);">
+              Adjust Venue Capacity (<span id="capacityDisplay">100</span> max)
+            </div>
+            <div class="capacity-controls">
+              <button class="stepper-btn" onclick="adjustCapacity(-25)">-25</button>
+              <button class="stepper-btn" onclick="adjustCapacity(-10)">-10</button>
+              <button class="stepper-btn" onclick="adjustCapacity(10)">+10</button>
+              <button class="stepper-btn" onclick="adjustCapacity(25)">+25</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-header-bar">
+            <div class="table-title">Recent Check-in Activity</div>
+            <span class="text-small" style="color: var(--muted);" id="attendeesCountLabel">0 attendees</span>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Attendee</th>
+                  <th>Ticket Type</th>
+                  <th>Status</th>
+                  <th>Check-in Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="attendeesTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--muted); padding: 32px;">
+                    Loading attendee check-in stream...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="newEventModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Create New Event</h2>
+        <button style="background: none; border: none; cursor: pointer; color: var(--muted);" onclick="closeNewEventModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <form id="newEventForm" onsubmit="handleCreateEvent(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="newEventName">Event Name</label>
+            <input type="text" id="newEventName" class="form-input" placeholder="e.g. Byte Race 2026 Finals" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="newEventVenue">Venue Location</label>
+            <input type="text" id="newEventVenue" class="form-input" placeholder="e.g. Auditorium Hall A" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="newEventDate">Event Date & Time</label>
+            <input type="datetime-local" id="newEventDate" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="newEventCapacity">Max Capacity</label>
+            <input type="number" id="newEventCapacity" class="form-input" min="1" max="10000" value="100" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeNewEventModal()">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveEventBtn">Create Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let eventsList = [];
+    let currentEventId = null;
+    let attendeesList = [];
+    let realtimeChannel = null;
+
+    async function initDashboard() {
+      await refreshEvents();
+      if (eventsList.length > 0) {
+        const active = eventsList.find(e => e.is_active) || eventsList[0];
+        selectEvent(active.id);
+      }
+    }
+
+    async function refreshEvents() {
+      try {
+        eventsList = await window.PassGate.getEvents();
+        renderSidebar();
+      } catch (err) {
+        console.error('Failed to load events:', err);
+      }
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById('sidebarList');
+      container.innerHTML = '';
+
+      eventsList.forEach(ev => {
+        const row = document.createElement('div');
+        row.className = `event-thread-row ${ev.id === currentEventId ? 'active' : ''}`;
+        row.onclick = () => selectEvent(ev.id);
+
+        row.innerHTML = `
+          <div class="thread-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+            </svg>
+          </div>
+          <div class="thread-info">
+            <div class="thread-name">${ev.name}</div>
+            <div class="thread-venue">${ev.venue}</div>
+          </div>
+          <div class="thread-meta">
+            <span class="thread-badge ${ev.is_active ? 'active-badge' : ''}">${ev.is_active ? 'ACTIVE' : (ev.checked_in_count || 0) + '/' + ev.capacity}</span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    async function selectEvent(eventId) {
+      currentEventId = eventId;
+      renderSidebar();
+
+      const ev = eventsList.find(e => e.id === eventId);
+      if (!ev) return;
+
+      document.getElementById('activeEventName').textContent = ev.name;
+      document.getElementById('activeEventVenue').textContent = ev.venue;
+      document.getElementById('activeEventDate').textContent = ev.event_date
+        ? new Date(ev.event_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+        : 'Scheduled';
+
+      const statusPill = document.getElementById('activeStatusPill');
+      if (ev.is_active) {
+        statusPill.style.display = 'inline-block';
+        document.getElementById('setActiveBtn').style.display = 'none';
+      } else {
+        statusPill.style.display = 'none';
+        document.getElementById('setActiveBtn').style.display = 'inline-flex';
+      }
+
+      document.getElementById('capacityDisplay').textContent = ev.capacity;
+
+      await loadEventAttendees(eventId, ev);
+
+      if (window.PassGate.subscribeToTurnout) {
+        if (realtimeChannel) {
+          try { window.PassGate.supabase?.removeChannel(realtimeChannel); } catch (e) {}
+        }
+        realtimeChannel = window.PassGate.subscribeToTurnout(eventId, () => {
+          loadEventAttendees(eventId, ev);
+        });
+      }
+    }
+
+    async function loadEventAttendees(eventId, ev) {
+      try {
+        let attendees = [];
+        if (window.PassGate.supabase) {
+          const { data, error } = await window.PassGate.supabase
+            .from('attendees')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false });
+          if (!error && data) attendees = data;
+        }
+
+        if (attendees.length === 0) {
+          try {
+            const res = await fetch(`/api/events/${eventId}/stats`);
+            if (res.ok) {
+              const info = await res.json();
+              attendees = info.recentCheckIns || [];
+            }
+          } catch (e) {}
+        }
+
+        if (attendees.length === 0) {
+          const localAttendees = JSON.parse(localStorage.getItem('passgate_attendees') || '[]');
+          attendees = localAttendees.filter(a => a.event_id === eventId);
+        }
+
+        attendeesList = attendees;
+        renderMetrics(ev, attendees);
+        renderAttendeesTable(attendees);
+      } catch (err) {
+        console.error('Error fetching attendees:', err);
+      }
+    }
+
+    function renderMetrics(ev, attendees) {
+      const registered = attendees.length || ev.attendee_count || 0;
+      const checkedIn = attendees.filter(a => a.checked_in).length || ev.checked_in_count || 0;
+      const capacity = ev.capacity || 100;
+      const remaining = Math.max(0, capacity - registered);
+      const turnoutPct = capacity > 0 ? Math.round((checkedIn / capacity) * 100) : 0;
+
+      document.getElementById('metricRegistered').textContent = registered;
+      document.getElementById('metricCheckedIn').textContent = checkedIn;
+      document.getElementById('metricRemaining').textContent = remaining;
+      document.getElementById('metricTurnout').textContent = `${turnoutPct}%`;
+
+      const circumference = 289;
+      const offset = circumference - (turnoutPct / 100) * circumference;
+      const ring = document.getElementById('turnoutRing');
+      ring.style.strokeDashoffset = Math.max(0, offset);
+      document.getElementById('ringPercentageText').textContent = `${turnoutPct}%`;
+      document.getElementById('attendeesCountLabel').textContent = `${registered} registered attendees`;
+    }
+
+    function renderAttendeesTable(attendees) {
+      const tbody = document.getElementById('attendeesTableBody');
+      if (!attendees || attendees.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--muted); padding: 32px;">
+              No attendees registered yet for this event.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = attendees.map(a => {
+        const timeStr = a.checked_in_at
+          ? new Date(a.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : '—';
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 600; color: var(--text);">${a.full_name || a.name}</div>
+              <div class="text-small" style="color: var(--muted);">${a.email}</div>
+            </td>
+            <td><span class="thread-badge">${a.ticket_type || 'General'}</span></td>
+            <td>
+              <span class="status-badge ${a.checked_in ? 'checked-in' : 'pending'}">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: ${a.checked_in ? '#16a34a' : '#94a3b8'};"></span>
+                ${a.checked_in ? 'Checked In' : 'Pending'}
+              </span>
+            </td>
+            <td class="text-small" style="font-family: monospace;">${timeStr}</td>
+            <td>
+              ${!a.checked_in ? `
+                <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="manualCheckIn('${a.id || a.token}')">
+                  Check In
+                </button>
+              ` : `
+                <span class="text-small" style="color: var(--success); font-weight: 600;">Verified</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function manualCheckIn(attendeeId) {
+      try {
+        const res = await window.PassGate.validateCheckIn(attendeeId);
+        if (res.success) {
+          window.PassGate.showToast(`Checked in ${res.attendee.full_name}`, 'success');
+          const ev = eventsList.find(e => e.id === currentEventId);
+          loadEventAttendees(currentEventId, ev);
+        } else {
+          window.PassGate.showToast(res.message, 'danger');
+        }
+      } catch (e) {
+        window.PassGate.showToast('Validation failed', 'danger');
+      }
+    }
+
+    async function toggleActiveStatus() {
+      if (!currentEventId) return;
+      if (window.PassGate.supabase) {
+        try {
+          await window.PassGate.supabase.from('events').update({ is_active: false }).neq('id', currentEventId);
+          await window.PassGate.supabase.from('events').update({ is_active: true }).eq('id', currentEventId);
+          window.PassGate.showToast('Active event updated successfully', 'success');
+          await refreshEvents();
+          selectEvent(currentEventId);
+          return;
+        } catch (e) {}
+      }
+
+      const localEvents = JSON.parse(localStorage.getItem('passgate_events') || '[]');
+      localEvents.forEach(ev => ev.is_active = (ev.id === currentEventId));
+      localStorage.setItem('passgate_events', JSON.stringify(localEvents));
+
+      window.PassGate.showToast('Active status updated', 'success');
+      await refreshEvents();
+      selectEvent(currentEventId);
+    }
+
+    async function adjustCapacity(delta) {
+      const ev = eventsList.find(e => e.id === currentEventId);
+      if (!ev) return;
+      const newCap = Math.max(1, (ev.capacity || 100) + delta);
+
+      if (window.PassGate.supabase) {
+        try {
+          await window.PassGate.supabase
+            .from('events')
+            .update({ capacity: newCap })
+            .eq('id', currentEventId);
+        } catch (e) {}
+      }
+
+      try {
+        await fetch(`/api/events/${currentEventId}/capacity-counter`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ delta })
+        });
+      } catch (e) {}
+
+      const localEvents = JSON.parse(localStorage.getItem('passgate_events') || '[]');
+      const target = localEvents.find(e => e.id === currentEventId);
+      if (target) {
+        target.capacity = newCap;
+        localStorage.setItem('passgate_events', JSON.stringify(localEvents));
+      }
+
+      ev.capacity = newCap;
+      document.getElementById('capacityDisplay').textContent = newCap;
+      renderMetrics(ev, attendeesList);
+      window.PassGate.showToast(`Capacity adjusted to ${newCap}`);
+    }
+
+    function openNewEventModal() {
+      document.getElementById('newEventModal').classList.add('open');
+    }
+
+    function closeNewEventModal() {
+      document.getElementById('newEventModal').classList.remove('open');
+    }
+
+    async function handleCreateEvent(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveEventBtn');
+      saveBtn.disabled = true;
+
+      const name = document.getElementById('newEventName').value.trim();
+      const venue = document.getElementById('newEventVenue').value.trim();
+      const event_date = new Date(document.getElementById('newEventDate').value).toISOString();
+      const capacity = parseInt(document.getElementById('newEventCapacity').value, 10);
+
+      try {
+        if (window.PassGate.supabase) {
+          const { data, error } = await window.PassGate.supabase
+            .from('events')
+            .insert([{ name, venue, event_date, capacity, is_active: false }])
+            .select()
+            .single();
+
+          if (!error && data) {
+            window.PassGate.showToast('Event created successfully!', 'success');
+            closeNewEventModal();
+            document.getElementById('newEventForm').reset();
+            await refreshEvents();
+            selectEvent(data.id);
+            return;
+          }
+        }
+
+        const newId = 'e-' + Math.random().toString(36).substring(2, 8);
+        const newEv = { id: newId, name, venue, event_date, capacity, is_active: false, created_at: new Date().toISOString() };
+        const localEvents = JSON.parse(localStorage.getItem('passgate_events') || '[]');
+        localEvents.unshift(newEv);
+        localStorage.setItem('passgate_events', JSON.stringify(localEvents));
+
+        closeNewEventModal();
+        document.getElementById('newEventForm').reset();
+        await refreshEvents();
+        selectEvent(newId);
+        window.PassGate.showToast('Event created successfully!', 'success');
+      } catch (err) {
+        window.PassGate.showToast('Error creating event', 'danger');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    function exportCSV() {
+      if (!currentEventId) return;
+      const ev = eventsList.find(e => e.id === currentEventId);
+      const csvRows = [
+        ['ID', 'Full Name', 'Email', 'Ticket Type', 'Checked In', 'Checked In At']
+      ];
+      attendeesList.forEach(a => {
+        csvRows.push([
+          a.id || a.token,
+          `"${a.full_name || a.name || ''}"`,
+          a.email || '',
+          a.ticket_type || 'General',
+          a.checked_in ? 'YES' : 'NO',
+          a.checked_in_at || ''
+        ]);
+      });
+      const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map(e => e.join(',')).join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `${(ev ? ev.name : 'event').replace(/\s+/g, '_')}_attendance.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.PassGate.showToast('CSV report exported');
+    }
+
+    setInterval(() => {
+      if (currentEventId) {
+        const ev = eventsList.find(e => e.id === currentEventId);
+        if (ev) loadEventAttendees(currentEventId, ev);
+      }
+    }, 2000);
+
+    initDashboard();
+  </script>
+</body>
+</html>
