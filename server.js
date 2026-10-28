@@ -7,6 +7,7 @@ import registrationRoutes from './routes/registration.js';
 import checkinRoutes from './routes/checkin.js';
 import statsRoutes from './routes/stats.js';
 import reportRoutes from './routes/reports.js';
+import eventRoutes from './routes/events.js';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use('/api', registrationRoutes);
 app.use('/api', checkinRoutes);
 app.use('/api', statsRoutes);
 app.use('/api', reportRoutes);
+app.use('/api', eventRoutes);
 
 /**
  * Health Check Endpoint
