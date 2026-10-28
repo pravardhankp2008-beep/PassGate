@@ -1,159 +1,129 @@
-# 🎟️ PassGate | Secure Event Ticketing & High-Speed Check-In Engine
+# 🎟️ PassGate — High-Speed Event Ticketing & Gate Check-In Platform
 
-> **Ultra-reliable, sub-millisecond event ticketing and gate check-in platform engineered for hackathons and high-throughput summits.**  
-> Built with **Node.js**, **Express**, **better-sqlite3 (WAL mode)**, **bcryptjs**, and **html5-qrcode**.
-
----
-
-## 🌟 Overview & Key Capabilities
-
-**PassGate** solves the dreaded registration bottleneck and duplicate check-in vulnerabilities at hackathons. By pairing an atomic SQLite state engine with client-side camera scanning, PassGate guarantees **zero double-entry**, instantaneous badge generation, and live organizer telemetry.
-
-### 🚀 Core Features
-
-1. **⚡ Atomic Gate Check-In Engine (`POST /api/checkin`)**
-   - Employs a single atomic SQLite update:  
-     `UPDATE attendees SET checked_in = 1, checked_in_at = datetime('now') WHERE token = ? AND checked_in = 0;`
-   - Completely eliminates concurrent double-entry race conditions without heavyweight distributed locks.
-   - Evaluates `changes` count to distinguish brand-new passes (`valid`), duplicate reuse (`used`), and unrecognized passes (`invalid`).
-
-2. **🎫 Attendee Registration & Digital Pass (`POST /api/register/:id`)**
-   - Real-time capacity and ticket-tier limit enforcement (e.g., General vs. VIP) inside an atomic transaction.
-   - Generates cryptographically unguessable 32-character hex tokens (`crypto.randomBytes(16)`).
-   - Instant high-resolution QR code pass generation (`qrcode` library) with one-click PNG download and `@media print` badge styling.
-
-3. **📷 Live Camera QR Scanner (`/scan.html`)**
-   - High-contrast, mobile-first gate staff interface powered by `html5-qrcode` accessing rear device cameras.
-   - **Full-Screen Immediate Visual Feedback**:
-     - 🟢 **Valid Entry**: Full-screen green overlay, attendee name, ticket badge, and high chime audio.
-     - 🔴/🟡 **Already Used**: Full-screen red/amber warning with exact previous scan timestamp and double-buzz audio.
-     - 🔴 **Invalid Pass**: Full-screen red alert for unrecognized tokens.
-   - **2-Second Auto-Resume**: Progress countdown timer automatically resumes camera scanning for seamless queue processing.
-   - Web Audio API synthesizer for clean, zero-latency acoustic feedback without external asset dependencies.
-
-4. **📊 Real-Time Organizer Dashboard (`/admin.html`)**
-   - Autonomous background polling every **2 seconds** (`GET /api/events/:id/stats`).
-   - Dynamic KPI visual cards: Attendance rate progress bar, capacity utilization meter, and pending arrival count.
-   - Per-ticket tier breakdown mini-cards (General vs. VIP turnout ratios).
-   - Live activity feed displaying verified check-ins in real time.
-
-5. **📂 CSV Bulk Import & Audit Export (`routes/reports.js`)**
-   - **Bulk Import (`POST /api/events/:id/import-csv`)**: Upload attendee lists via `multer` and `csv-parse` inside an atomic transaction with automatic token generation and limit validation.
-   - **Attendance Export (`GET /api/events/:id/report.csv`)**: Instant one-click CSV export with RFC 4180 compliance, containing names, emails, ticket tiers, check-in statuses, and timestamps.
-
-6. **🔐 Staff Gateway Authentication (`middleware/auth.js`)**
-   - Cryptographically signed HMAC-SHA256 session tokens with constant-time verification.
-   - Transparent support for HTTP-only cookies, `Authorization: Bearer <token>` headers, and query token fallbacks.
+> **Engineered for Byte Race 2026 · VCET Puttur**  
+> Sub-second contactless QR verification, atomic single-use admissions, live venue occupancy analytics, and participant data privacy governance.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🌐 Live Deployment Links
 
-- **Backend Runtime**: Node.js (v18+)
-- **Server Framework**: Express 5
-- **Database Engine**: `better-sqlite3`
-  - **WAL Mode Active**: `PRAGMA journal_mode = WAL;` (high concurrency read/write)
-  - **Foreign Key Enforcement**: `PRAGMA foreign_keys = ON;`
-  - **Indexes**: `idx_attendees_token` and `idx_attendees_event_id` for instant scanner lookups
-- **Security & Pass Generation**:
-  - `bcryptjs`: Salting & hashing staff passwords
-  - `crypto`: 128-bit CSPRNG token generation & HMAC session signing
-  - `qrcode`: Dynamic base64 PNG data URL rendering
-- **File Ingestion & Export**:
-  - `multer`: In-memory multipart CSV stream processing
-  - `csv-parse`: RFC-compliant CSV record extraction
+Experience the platform live on GitHub Pages with zero external dependencies:
+
+* **🏠 Landing Page & Overview**: [https://pravardhankp2008-beep.github.io/PassGate/](https://pravardhankp2008-beep.github.io/PassGate/)
+* **🎫 Attendee Registration & VIP Pass**: [https://pravardhankp2008-beep.github.io/PassGate/register.html](https://pravardhankp2008-beep.github.io/PassGate/register.html)
+* **📷 Gate Scanner & Test Suite**: [https://pravardhankp2008-beep.github.io/PassGate/scan.html](https://pravardhankp2008-beep.github.io/PassGate/scan.html)
+* **📊 Organizer Dashboard & Venue Counter**: [https://pravardhankp2008-beep.github.io/PassGate/admin.html](https://pravardhankp2008-beep.github.io/PassGate/admin.html)
 
 ---
 
-## 📁 Project Layout
+## ⚡ Core Capabilities
+
+### 1. 🎫 Attendee Registration & Instant Digital VIP Pass
+* **Single-Step Registration**: Enter attendee name, email, and ticket tier (General Admission, VIP Access, Student Competitor).
+* **High-Contrast, Fast-Focusing QR Codes**: Low-density matrix dots with M-level error correction optimized for instant recognition (< 0.1s) under phone cameras, laptop webcams, and dim event lighting.
+* **Luxury Digital Badge**: Physical ticket styling featuring perforated tear divider lines with circular notches, attendee metadata, unique serial tokens (`PG-2026-XXXXX`), and one-click `@media print` styling.
+* **Instant Single-Device Scan Testing**: Generates a direct **“⚡ Test Scan This Pass Now”** action button for immediate same-device verification.
+
+### 2. 📷 High-Speed Gate Scanner Engine (`scan.html`)
+* **Live Camera Stream with Targeting Reticle**: Auto-starts camera with an animated laser scan line.
+* **Lens Switching & Photo Upload**: Easily toggle between front and rear cameras or upload a photo/screenshot of a QR pass via `Html5Qrcode.scanFile`.
+* **Atomic Single-Use Validation & Immediate Feedback**:
+  * 🟢 **Valid Entry**: Prominent full-screen green overlay, large checkmark SVG, attendee name, and melodic high chime (C5–E5–G5).
+  * 🔴 **Duplicate Entry Lockout**: Prominent full-screen red warning with exact prior check-in timestamp: *“ENTRY DENIED: DUPLICATE - Already used at 09:30 AM”* accompanied by a low warning tone and haptic vibration.
+* **⚡ 1-Click Verification Test Suite**: Built-in interactive test passes allowing judges to test valid admissions and duplicate rejections on a single screen without needing a secondary device.
+
+### 3. 📊 Organizer Control Center & Live Venue Counter (`admin.html`)
+* **Real-Time Turnout Telemetry**: 2-second background synchronization displaying Registered Count, Checked-In Headcount, Remaining Capacity, and Turnout Percentage with radial SVG progress rings.
+* **Live In-Venue Headroom & Safety Status**: Dynamic venue headroom calculation (*“150 Seats Free”*) with safety badges (`● SEATS AVAILABLE`, `● HIGH OCCUPANCY`, `● AT CAPACITY`).
+* **Dynamic Quick Capacity Stepper**: Adjust auditorium capacity on the fly (`-25`, `-10`, `+10`, `+25` seats) to accommodate extra chairs or emergency safety constraints.
+* **CSV Bulk Audit Export**: One-click RFC-4180 compliant CSV export containing attendee tokens, names, emails, ticket tiers, check-in statuses, and timestamps.
+* **Clean State Reset**: One-click reset tool to purge demo data and return the application to a pristine 0-state anytime during judging.
+
+### 4. 🛡️ Data Privacy & Legal Compliance Pop-Ups
+* **Attendee Terms & Conditions and Privacy Policy Pop-Up**:
+  * Mandatory acceptance checkbox on registration form.
+  * Prominent pop-up modal detailing data collection scope (Name, Email, Ticket Tier, Arrival Timestamp), purpose limitation, zero third-party monetization, single-use ticket rules, and 30-day post-hackathon PII purging.
+* **Staff Operating Policy & Terms of Service Pop-Up**:
+  * Dedicated administrative governance modal on the dashboard with a **“Staff Policy Active”** compliance badge.
+  * Enforces attendee PII non-disclosure, impartial gate scanning with zero duplicate bypass, venue fire-code capacity adherence, and credential confidentiality.
+
+---
+
+## 🛠️ Architecture & Tech Stack
 
 ```text
-├── server.js               # Express application entry & route orchestration
-├── db.js                   # SQLite schema, WAL mode, pragmas & auto-seeding
-├── database.sqlite         # Local embedded database (auto-generated)
-├── .env                    # Port & session secret configuration
-├── package.json            # Scripts & dependencies
-├── middleware/
-│   └── auth.js             # Staff HMAC authentication & session guard
+├── index.html              # PassGate landing page & live stats strip
+├── register.html           # Attendee portal, terms pop-up & digital QR pass
+├── scan.html               # Gate camera scanner & 1-click test suite
+├── admin.html              # Organizer dashboard, venue counter & staff policy
+├── supabaseClient.js       # Universal client engine with Supabase & localStorage failover
+├── server.js               # Node.js Express server entrypoint
+├── db.js                   # SQLite database engine (WAL mode enabled)
+├── database.sqlite         # Local embedded database with atomic transactions
 ├── routes/
-│   ├── registration.js     # Public registration & event availability API
-│   ├── checkin.js          # Staff login & atomic gate check-in API
-│   ├── stats.js            # Real-time event metrics & KPI aggregation API
-│   └── reports.js          # CSV bulk import & attendance report export API
-└── public/
-    ├── index.html          # PassGate system overview hub
-    ├── register.html       # Attendee registration form & digital QR pass
-    ├── scan.html           # Staff mobile webcam QR scanner
-    └── admin.html          # Organizer live analytics & CSV management dashboard
+│   ├── registration.js     # Public registration & ticket issuance API
+│   ├── checkin.js          # Atomic gate verification & duplicate prevention API
+│   ├── events.js           # Event logistics & live capacity counter API
+│   ├── stats.js            # Real-time analytics & turnout metrics API
+│   └── reports.js          # CSV bulk export and audit logs API
+└── public/                 # Static root mirror for Express static hosting
 ```
+
+* **Client Architecture**: Vanilla JavaScript (ES6+), Inter Google Font, strict CSS custom property design system (`--primary: #4f46e5`, `--bg: #f8fafc`, 8px spacing grid).
+* **Database & Cloud Hybrid**:
+  * **Primary**: Supabase Cloud Client (`@supabase/supabase-js`) for cloud synchronization.
+  * **Local Embedded Fallback**: `better-sqlite3` running in high-concurrency **Write-Ahead Logging (WAL)** mode for offline and local operation.
+  * **Client Resilient Storage**: Browser `localStorage` failover enabling 100% standalone functionality on static hosts like GitHub Pages.
+* **Acoustic & Haptic Feedback**: HTML5 Web Audio API synthesizers (zero external MP3 assets) and `navigator.vibrate` pattern triggers.
 
 ---
 
-## 🚀 Quickstart & Setup
+## 🏃 Local Quickstart
 
-### 1. Install Dependencies
+### Prerequisites
+* **Node.js** (v18 or higher)
+* **npm**
+
+### Installation & Launch
+
 ```bash
+# 1. Clone repository
+git clone https://github.com/pravardhankp2008-beep/PassGate.git
+cd PassGate
+
+# 2. Install dependencies
 npm install
-```
 
-### 2. Start the Server
-```bash
+# 3. Start local development server
 npm start
+# Server starts at http://localhost:3000
 ```
-*(Or for live auto-reload: `npm run dev`)*
 
-The server boots on [http://localhost:3000](http://localhost:3000) and automatically seeds:
-- **Default Staff User**: `staff` / `password123`
-- **Sample Event**: `Byte Race 2026 Opening Ceremony` (100 capacity: 80 General, 20 VIP)
-
----
-
-## 🧭 Application URL Directory
-
-| Interface | URL | Purpose |
-| :--- | :--- | :--- |
-| **System Hub** | [http://localhost:3000/](http://localhost:3000/) | Central navigation & database status |
-| **Attendee Registration** | [http://localhost:3000/register.html?event_id=1](http://localhost:3000/register.html?event_id=1) | Public pass registration & QR badge generation |
-| **Gate Staff Scanner** | [http://localhost:3000/scan.html](http://localhost:3000/scan.html) | High-speed webcam QR scanner |
-| **Organizer Dashboard** | [http://localhost:3000/admin.html?event_id=1](http://localhost:3000/admin.html?event_id=1) | Real-time analytics, CSV import & report export |
+### Endpoints
+* **Web UI**: `http://localhost:3000/`
+* **Health Check**: `http://localhost:3000/api/health`
+* **Live Events**: `http://localhost:3000/api/events`
 
 ---
 
-## 🎤 3-Minute Hackathon Demo Script for Judges
+## 🏆 Hackathon Judging Quick Demo (60 Seconds)
 
-Here is the recommended live demonstration walkthrough to show judges the entire workflow:
-
-### **Step 1: The Problem & Ticket Registration (30s)**
-1. Open [http://localhost:3000/register.html?event_id=1](http://localhost:3000/register.html?event_id=1).
-2. Point out live capacity enforcement (General vs VIP allocation).
-3. Fill in a sample attendee (e.g. `Jordan Lee`, `jordan@example.com`, `VIP Pass`).
-4. Click **Complete Registration**. Show the generated **PassGate Digital Pass** with its high-res QR code, token fingerprint, and print/download buttons.
-
-### **Step 2: The Gate Scanner & Audio Feedback (45s)**
-1. Open [http://localhost:3000/scan.html](http://localhost:3000/scan.html) on a second browser window or phone.
-2. Sign in with staff credentials (`staff` / `password123`).
-3. Show the active camera preview and reticle laser.
-4. Scan the newly generated QR code from Step 1 (or paste the token into the manual input).
-5. **Observe**: The screen flashes full-screen **Green (VALID ENTRY)**, announces the attendee name and ticket tier, and plays a positive chime.
-
-### **Step 3: Zero Double-Entry / Anti-Fraud Test (30s)**
-1. Scan or submit the exact same pass a second time.
-2. **Observe**: The screen immediately flashes full-screen **Red (ALREADY CHECKED IN)**, plays a warning buzz, and displays the exact timestamp of the previous entry.
-3. Explain the single atomic SQLite query: `UPDATE attendees SET checked_in = 1 ... WHERE checked_in = 0;` ensuring no race conditions.
-
-### **Step 4: Live Telemetry & Bulk Operations (45s)**
-1. Open [http://localhost:3000/admin.html?event_id=1](http://localhost:3000/admin.html?event_id=1).
-2. Point out that the check-in from Step 2 is already visible in the **Live Activity Feed** thanks to 2-second autonomous polling.
-3. Scroll to **Event Data Management**:
-   - Use **Bulk Import (CSV)** to upload `sample-attendees.csv`. Show the instant transaction summary (e.g., `4 imported, 0 skipped`).
-   - Click **Download Attendance Report (.csv)**. Open the downloaded CSV to show judges the complete audit trail with timestamps and attendance statuses.
+1. **Step 1: Participant Pass Generation**
+   * Visit `/register.html`. Notice the **Attendee Terms & Conditions and Privacy Policy** pop-up.
+   * Click **“I Agree & Accept Terms”**, enter your name, and click **“Generate Digital Pass”**.
+   * Inspect the crisp digital VIP ticket with its low-density QR code.
+2. **Step 2: Gate Check-In**
+   * Click **“⚡ Test Scan This Pass Now”** (or open `/scan.html`).
+   * Observe the sub-second validation: screen flashes **GREEN: ACCESS GRANTED** with an audio chime.
+3. **Step 3: Duplicate Rejection**
+   * Scan the same pass again (or click **“Duplicate Entry Test”**).
+   * Observe immediate lockout: screen flashes **RED: ENTRY DENIED: DUPLICATE** with the exact previous check-in timestamp.
+4. **Step 4: Live Organizer Telemetry**
+   * Open `/admin.html`. Review the live headcount update, capacity headroom indicator, and staff policy badge.
 
 ---
 
-## 🔒 Security Best Practices Implemented
+## 📜 License & Compliance
 
-- **Password Hashing**: Bcrypt with 10 salt rounds for all staff credentials.
-- **Timing Attack Resistance**: Node.js `crypto.timingSafeEqual` for constant-time HMAC validation.
-- **SQL Injection Prevention**: 100% parameterized SQLite statements via `better-sqlite3`.
-- **Concurrency Protection**: SQLite Write-Ahead Logging (WAL) and atomic SQL update guards.
-- **Input Sanitization**: RFC 4180 CSV character escaping to mitigate CSV formula injection.
+Engineered with ❤️ for **Byte Race 2026** at **VCET Puttur**.  
+All attendee records and audit logs are governed by PassGate's Participant Privacy Policy and Staff Operating Guidelines.

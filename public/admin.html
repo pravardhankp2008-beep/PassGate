@@ -1216,6 +1216,13 @@
     }, 2000);
 
     initDashboard();
+
+    // Auto pop up Staff Policy on first visit
+    if (!window.PassGate.hasAcceptedAdminPolicy()) {
+      setTimeout(() => {
+        openStaffPolicyModal();
+      }, 500);
+    }
   </script>
 
   <!-- Staff Operating Policy & Terms of Service Modal -->

@@ -521,9 +521,13 @@
       loadActiveEvent();
     }
 
-    // Auto-check if user previously accepted
+    // Auto-check or pop up Terms & Privacy Policy on load
     if (window.PassGate.hasAcceptedAttendeeTerms()) {
       document.getElementById('termsCheck').checked = true;
+    } else {
+      setTimeout(() => {
+        openTermsModal();
+      }, 400);
     }
 
     loadActiveEvent();
