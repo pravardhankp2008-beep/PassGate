@@ -1,0 +1,5 @@
+name,email,phone,ticket_type_name
+Marcus Brody,marcus.brody@example.com,+1-555-0811,General
+Talia Al Ghul,talia.alghul@example.com,+1-555-0822,VIP
+Lucius Fox,lucius.fox@example.com,+1-555-0833,VIP
+Damian Wayne,damian.wayne@example.com,+1-555-0844,General

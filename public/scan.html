@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PassGate | Staff QR Scanner & Check-In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/hydroglass.css">
+  
+  <!-- html5-qrcode library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, #00677d 0%, #00c2e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Auth Required Card */
+    #authCard {
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .auth-header h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .auth-header p {
+      font-size: 0.875rem;
+      color: var(--text-sub);
+      margin-top: 0.35rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+
+    .hint-box {
+      background: rgba(0, 194, 232, 0.08);
+      border: 1px dashed rgba(0, 194, 232, 0.35);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      color: #00677d;
+      font-family: var(--font-mono);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    /* Scanner Interface */
+    #scannerSection {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .scanner-viewport-card {
+      background: #0d0e1e;
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-elevation-3);
+    }
+
+    #reader {
+      width: 100% !important;
+      border: none !important;
+    }
+
+    #reader video {
+      border-radius: var(--radius-lg);
+      object-fit: cover !important;
+    }
+
+    /* Laser Reticle Overlay */
+    .scan-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      height: 220px;
+      border: 2px solid rgba(0, 194, 232, 0.7);
+      border-radius: var(--radius-lg);
+      pointer-events: none;
+      box-shadow: 0 0 0 9999px rgba(13, 14, 30, 0.45);
+    }
+
+    .scan-reticle::before {
+      content: '';
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      height: 2.5px;
+      background: #00c2e8;
+      box-shadow: 0 0 12px 3px rgba(0, 194, 232, 0.8);
+      animation: scanLaser 2s infinite ease-in-out alternate;
+    }
+
+    @keyframes scanLaser {
+      0% { top: 12%; }
+      100% { top: 88%; }
+    }
+
+    /* Scanner Status bar */
+    .scanner-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      color: #006b5d;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    /* Manual Token Fallback */
+    .manual-box {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .manual-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .manual-input-row input {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    /* Scan History Feed */
+    .history-card {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 190px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(226, 224, 248, 0.9);
+      padding: 0.7rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      box-shadow: 0 2px 6px rgba(45, 49, 78, 0.03);
+    }
+
+    .badge-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+    }
+
+    .badge-valid { background: rgba(0, 200, 175, 0.15); color: #006b5d; border: 1px solid rgba(0, 200, 175, 0.35); }
+    .badge-used { background: rgba(245, 158, 11, 0.15); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge-invalid { background: rgba(186, 26, 26, 0.15); color: #93000a; border: 1px solid rgba(186, 26, 26, 0.35); }
+
+    /* ========================================================
+       FULL SCREEN FEEDBACK OVERLAYS
+       ======================================================== */
+    #feedbackOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem;
+      text-align: center;
+      animation: popIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Valid Green */
+    #feedbackOverlay.state-valid {
+      background: radial-gradient(circle at center, #00c8af 0%, #009e8b 55%, #004e43 100%);
+      color: #ffffff;
+    }
+
+    /* Already Used Amber/Red */
+    #feedbackOverlay.state-used {
+      background: radial-gradient(circle at center, #ea580c 0%, #c2410c 55%, #7c2d12 100%);
+      color: #ffffff;
+    }
+
+    /* Invalid Red */
+    #feedbackOverlay.state-invalid {
+      background: radial-gradient(circle at center, #ba1a1a 0%, #93000a 60%, #450a0a 100%);
+      color: #ffffff;
+    }
+
+    .feedback-icon {
+      font-size: 5rem;
+      line-height: 1;
+      margin-bottom: 1.25rem;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35));
+    }
+
+    .feedback-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+      font-family: var(--font-sans);
+      margin-bottom: 0.5rem;
+    }
+
+    .feedback-name {
+      font-size: 1.85rem;
+      font-weight: 800;
+      margin-bottom: 0.85rem;
+    }
+
+    .feedback-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 0.4rem 1.4rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.22);
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .feedback-meta {
+      font-size: 1rem;
+      font-family: var(--font-mono);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(8px);
+    }
+
+    .auto-resume-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      width: 100%;
+      animation: countdown 2s linear forwards;
+    }
+
+    @keyframes countdown {
+      0% { width: 100%; }
+      100% { width: 0%; }
+    }
+  </style>
+</head>
+<body class="hydroglass-theme">
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <a href="/" class="brand">
+        PASS<span>GATE</span>
+      </a>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span class="tactile-badge badge-cyan">
+          <span class="badge-dot badge-dot-cyan"></span>
+          SUPABASE
+        </span>
+        <div id="staffStatusBadge">
+          <span class="tactile-badge badge-neutral">
+            <span>🔒 STAFF GATEWAY</span>
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 1. Staff Authentication Card -->
+    <section class="glass-panel" id="authCard">
+      <div class="auth-header">
+        <h2>Gate Staff Login</h2>
+        <p>Authenticate with staff credentials to activate the high-speed camera scanner engine.</p>
+      </div>
+
+      <form id="loginForm" style="display: flex; flex-direction: column; gap: 1.15rem;">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" class="tactile-input" value="staff" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="tactile-input" value="password123" required>
+        </div>
+
+        <button type="submit" class="btn-tactile-primary" id="loginBtn" style="width: 100%;">
+          <span>Authorize Staff Scanner</span>
+          <span>⚡</span>
+        </button>
+
+        <div class="hint-box">
+          <span>Default: staff / password123</span>
+          <button type="button" id="quickFillBtn" style="background:none; border:none; color:var(--primary); font-family:var(--font-sans); font-weight:700; cursor:pointer;">Quick Fill</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 2. Active Scanner Section -->
+    <section id="scannerSection">
+      <!-- Camera Preview -->
+      <div class="scanner-viewport-card">
+        <div id="reader"></div>
+        <div class="scan-reticle"></div>
+      </div>
+
+      <!-- Controls & Status -->
+      <div class="glass-panel scanner-controls">
+        <div class="status-indicator">
+          <span class="badge-dot badge-dot-mint animate-pulse-subtle"></span>
+          <span id="scannerStatusText">CAMERA SCANNING ACTIVE</span>
+        </div>
+        <button type="button" class="btn-tactile-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.75rem;" id="logoutBtn">
+          Logout
+        </button>
+      </div>
+
+      <!-- Manual Code Entry Fallback -->
+      <div class="glass-panel manual-box">
+        <label for="manualToken">Manual Token Entry (Scanner Fallback)</label>
+        <div class="manual-input-row">
+          <input type="text" id="manualToken" class="tactile-input" placeholder="Paste 32-char hex token...">
+          <button type="button" class="btn-tactile-primary" id="manualSubmitBtn" style="padding: 0 1.25rem;">Verify</button>
+        </div>
+      </div>
+
+      <!-- Live Scan History Feed -->
+      <div class="glass-panel history-card">
+        <div class="history-header">
+          <span>Recent Scans in this Session</span>
+          <span id="scanCountText" style="color: var(--primary);">0 Scanned</span>
+        </div>
+        <div class="history-list" id="historyList">
+          <div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:0.75rem;">
+            Awaiting first QR code scan...
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Full-Screen Feedback Overlay -->
+  <div id="feedbackOverlay">
+    <div class="feedback-icon" id="fbIcon">✅</div>
+    <div class="feedback-title" id="fbTitle">VALID PASS</div>
+    <div class="feedback-name" id="fbName">Alex Rivers</div>
+    <div class="feedback-badge" id="fbBadge">VIP PASS</div>
+    <div class="feedback-meta" id="fbMeta">Checked in at: 10:45 AM</div>
+    <div class="auto-resume-bar"></div>
+  </div>
+
+  <script>
+    // State
+    let html5QrCode = null;
+    let isProcessing = false;
+    let resumeTimer = null;
+    let scanCount = 0;
+
+    // Web Audio Synthesizer for High-Speed Audio Feedback
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'valid') {
+        // High double-beep (chime)
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880, now + 0.1); // A5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'used') {
+        // Low double-buzz
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.setValueAtTime(180, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else {
+        // Low error buzz
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(140, now);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      }
+    }
+
+    // Check staff session on startup
+    async function checkStaffAuth() {
+      try {
+        const res = await fetch('/api/staff/me');
+        if (res.ok) {
+          const data = await res.json();
+          onStaffAuthenticated(data.staff);
+        } else {
+          showAuthCard();
+        }
+      } catch {
+        showAuthCard();
+      }
+    }
+
+    function showAuthCard() {
+      document.getElementById('authCard').style.display = 'flex';
+      document.getElementById('scannerSection').style.display = 'none';
+      document.getElementById('staffStatusBadge').innerHTML = '<span class="tactile-badge badge-neutral">🔒 STAFF LOGIN REQUIRED</span>';
+    }
+
+    function onStaffAuthenticated(staff) {
+      document.getElementById('authCard').style.display = 'none';
+      document.getElementById('scannerSection').style.display = 'flex';
+      document.getElementById('staffStatusBadge').innerHTML = `
+        <span class="tactile-badge badge-mint">
+          <span class="badge-dot badge-dot-mint"></span>
+          @${staff.username} (${staff.role})
+        </span>
+      `;
+      startCameraScanner();
+    }
+
+    // Staff Login Form Submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const loginBtn = document.getElementById('loginBtn');
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span>Verifying...</span> <span>⏳</span>';
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Authentication failed');
+        }
+
+        // Store token in localStorage as backup for non-cookie environments
+        if (data.token) {
+          localStorage.setItem('passgate_staff_token', data.token);
+        }
+
+        onStaffAuthenticated(data.staff);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<span>Authorize Staff Scanner</span> <span>⚡</span>';
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (html5QrCode) {
+        try { await html5QrCode.stop(); } catch {}
+      }
+      localStorage.removeItem('passgate_staff_token');
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.reload();
+    });
+
+    // Quick Fill helper
+    document.getElementById('quickFillBtn').addEventListener('click', () => {
+      document.getElementById('username').value = 'staff';
+      document.getElementById('password').value = 'password123';
+    });
+
+    // Start rear-camera continuous QR scanner
+    async function startCameraScanner() {
+      if (html5QrCode) return;
+
+      try {
+        html5QrCode = new Html5Qrcode('reader');
+
+        const config = {
+          fps: 15,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCode.start(
+          { facingMode: 'environment' },
+          config,
+          onScanSuccess,
+          () => {} // Ignore scan failure frames
+        );
+      } catch (err) {
+        console.warn('Camera auto-start notice:', err);
+        document.getElementById('scannerStatusText').textContent = 'CAMERA UNAVAILABLE (USE MANUAL TOKEN)';
+      }
+    }
+
+    // Handle Decoded QR code
+    async function onScanSuccess(decodedText) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      // Check in token
+      await executeCheckin(decodedText);
+    }
+
+    // Manual token submit
+    document.getElementById('manualSubmitBtn').addEventListener('click', () => {
+      const token = document.getElementById('manualToken').value.trim();
+      if (!token) return;
+      executeCheckin(token);
+      document.getElementById('manualToken').value = '';
+    });
+
+    // Checkin API Call
+    async function executeCheckin(token) {
+      document.getElementById('scannerStatusText').textContent = 'VERIFYING TICKET TOKEN...';
+
+      try {
+        // Optional Bearer token header if cookie is blocked
+        const storedToken = localStorage.getItem('passgate_staff_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (storedToken) {
+          headers['Authorization'] = `Bearer ${storedToken}`;
+        }
+
+        const res = await fetch('/api/checkin', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ token })
+        });
+
+        const data = await res.json();
+        handleCheckinResult(data, token);
+      } catch (err) {
+        handleCheckinResult({ status: 'invalid', message: 'Network connection failure.' }, token);
+      }
+    }
+
+    // Full-Screen Feedback States
+    function handleCheckinResult(res, token) {
+      const overlay = document.getElementById('feedbackOverlay');
+      const icon = document.getElementById('fbIcon');
+      const title = document.getElementById('fbTitle');
+      const name = document.getElementById('fbName');
+      const badge = document.getElementById('fbBadge');
+      const meta = document.getElementById('fbMeta');
+
+      overlay.className = '';
+
+      if (res.status === 'valid') {
+        // 1. VALID PASS (GREEN / BIO-MINT)
+        overlay.classList.add('state-valid');
+        icon.textContent = '✅';
+        title.textContent = 'VALID ENTRY';
+        name.textContent = res.name || 'Verified Attendee';
+        badge.textContent = (res.ticketType || 'GENERAL') + ' PASS';
+        meta.textContent = `Event: ${res.eventName || 'Byte Race 2026'} • Just Now`;
+
+        playSound('valid');
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        recordHistoryItem(res.name, res.ticketType, 'valid', token);
+
+      } else if (res.status === 'used') {
+        // 2. ALREADY USED (ORANGE/AMBER)
+        overlay.classList.add('state-used');
+        icon.textContent = '⚠️';
+        title.textContent = 'ALREADY CHECKED IN';
+        name.textContent = res.name || 'Attendee';
+        badge.textContent = (res.ticketType || 'GENERAL') + ' PASS';
+        meta.textContent = `Previously Scanned at: ${res.checked_in_at || 'Earlier'}`;
+
+        playSound('used');
+        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+        recordHistoryItem(res.name, res.ticketType, 'used', token);
+
+      } else {
+        // 3. INVALID (RED)
+        overlay.classList.add('state-invalid');
+        icon.textContent = '⛔';
+        title.textContent = 'INVALID PASS';
+        name.textContent = 'Unrecognized Token';
+        badge.textContent = 'ACCESS DENIED';
+        meta.textContent = res.message || 'Token does not exist in event registry.';
+
+        playSound('invalid');
+        if (navigator.vibrate) navigator.vibrate(400);
+        recordHistoryItem('Unknown', 'Invalid', 'invalid', token);
+      }
+
+      // Display Full-Screen Overlay
+      overlay.style.display = 'flex';
+
+      // Auto-resume after 2 seconds
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => {
+        dismissFeedback();
+      }, 2000);
+    }
+
+    // Dismiss overlay and resume camera
+    function dismissFeedback() {
+      clearTimeout(resumeTimer);
+      document.getElementById('feedbackOverlay').style.display = 'none';
+      document.getElementById('scannerStatusText').textContent = 'CAMERA SCANNING ACTIVE';
+      isProcessing = false;
+    }
+
+    // Tap anywhere on overlay to dismiss immediately
+    document.getElementById('feedbackOverlay').addEventListener('click', dismissFeedback);
+
+    // Add entry to history feed
+    function recordHistoryItem(name, ticketType, status, token) {
+      scanCount++;
+      document.getElementById('scanCountText').textContent = `${scanCount} Scanned`;
+
+      const list = document.getElementById('historyList');
+      if (scanCount === 1) list.innerHTML = '';
+
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.15rem;">
+          <strong style="color:var(--text-main); font-weight:700;">${name}</strong>
+          <span style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">${token.substring(0, 12)}... • ${timeStr}</span>
+        </div>
+        <span class="badge-tag badge-${status}">${status.toUpperCase()}</span>
+      `;
+
+      list.prepend(item);
+    }
+
+    // Start authentication check
+    checkStaffAuth();
+  </script>
+</body>
+</html>

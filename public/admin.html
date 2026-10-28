@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassGate | Live Event Check-In Analytics & Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/hydroglass.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.75rem 1.25rem 3rem;
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1140px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+    }
+
+    /* Top Navigation Header */
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.75rem;
+      border-radius: var(--radius-xl);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-family: var(--font-sans);
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--text-main);
+      text-decoration: none;
+      letter-spacing: -0.03em;
+    }
+
+    .brand span {
+      background: linear-gradient(135deg, #00677d 0%, #00c2e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    /* Auth Prompt Card */
+    #authOverlay {
+      padding: 2.75rem;
+      max-width: 480px;
+      margin: 3rem auto;
+      display: none;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Event Overview Banner */
+    .event-banner {
+      padding: 2rem 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .event-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3.5px;
+      background: linear-gradient(90deg, #00c2e8, #8b52ec, #00c8af);
+    }
+
+    .event-header-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .event-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .event-meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--text-sub);
+    }
+
+    .meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(226, 224, 248, 0.8);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-pill);
+    }
+
+    .meta-chip strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    /* Top KPI Metric Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .kpi-card {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.85rem;
+    }
+
+    .kpi-main-number {
+      font-size: 2.85rem;
+      font-weight: 800;
+      font-family: var(--font-sans);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--text-main);
+    }
+
+    .kpi-subtext {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    /* Ticket Type Breakdown Mini-cards */
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .ticket-types-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .ticket-mini-card {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .ticket-mini-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ticket-counts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      background: rgba(245, 242, 255, 0.75);
+      border: 1px solid rgba(226, 224, 248, 0.9);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+    }
+
+    .ticket-counts div strong {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      font-family: var(--font-sans);
+      margin-bottom: 0.15rem;
+    }
+
+    .ticket-counts div span {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    /* Tools Section: CSV Import & Export */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .tool-card {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .tool-header h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tool-header p {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin-top: 0.25rem;
+    }
+
+    .file-drop-area {
+      border: 2px dashed rgba(0, 194, 232, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .file-drop-area:hover {
+      border-color: #00c2e8;
+      background: rgba(0, 194, 232, 0.06);
+    }
+
+    .file-drop-area input[type="file"] {
+      display: none;
+    }
+
+    .file-name-preview {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #00677d;
+      margin-top: 0.45rem;
+      word-break: break-all;
+      font-weight: 600;
+    }
+
+    .alert-box {
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      font-size: 0.85rem;
+      display: none;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
+    .alert-success {
+      background: rgba(0, 200, 175, 0.15);
+      border: 1px solid rgba(0, 200, 175, 0.35);
+      color: #006b5d;
+    }
+
+    .alert-error {
+      background: var(--error-container);
+      border: 1px solid rgba(186, 26, 26, 0.35);
+      color: var(--on-error-container);
+    }
+
+    /* Live Activity Feed */
+    .activity-card {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .activity-table-wrapper {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(226, 224, 248, 0.9);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 4px 14px rgba(45, 49, 78, 0.04);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    th {
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.9rem 1.25rem;
+      background: rgba(245, 242, 255, 0.8);
+      border-bottom: 1.5px solid rgba(226, 224, 248, 0.95);
+    }
+
+    td {
+      padding: 0.95rem 1.25rem;
+      border-bottom: 1px solid rgba(231, 230, 253, 0.7);
+      color: var(--text-body);
+    }
+
+    tr:hover td {
+      background: rgba(0, 194, 232, 0.05);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.75rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="hydroglass-theme">
+  <div class="dashboard-container">
+    <!-- Top Navigation Bar -->
+    <nav class="glass-panel top-nav">
+      <div class="brand-group">
+        <a href="/" class="brand">PASS<span>GATE</span></a>
+        <span class="tactile-badge badge-cyan" id="supabaseBadge">
+          <span class="badge-dot badge-dot-cyan animate-pulse-subtle"></span>
+          <span>SUPABASE CLOUD</span>
+        </span>
+        <span class="tactile-badge badge-mint">
+          <span class="badge-dot badge-dot-mint animate-pulse-subtle"></span>
+          <span id="syncStatus">LIVE SYNC (2s)</span>
+        </span>
+      </div>
+
+      <div class="nav-actions">
+        <a href="#" id="downloadReportNavBtn" class="btn-tactile-purple">📥 CSV Report</a>
+        <a href="/scan.html" class="btn-tactile-mint">📷 Scanner</a>
+        <a href="/register.html?event_id=1" class="btn-tactile-primary">🎟️ Registration</a>
+        <button type="button" class="btn-tactile-secondary" id="refreshBtn">🔄 Refresh</button>
+        <button type="button" class="btn-tactile-secondary" id="logoutBtn">Logout</button>
+      </div>
+    </nav>
+
+    <!-- Staff Authentication Prompt (shown if not logged in) -->
+    <div id="authOverlay" class="glass-panel">
+      <div>
+        <h2 style="font-size: 1.45rem; font-weight:800; color:var(--text-main); margin-bottom:0.35rem;">Staff Gateway Authorization</h2>
+        <p style="color:var(--text-sub); font-size:0.875rem;">Login with your gate staff credentials to access real-time event analytics.</p>
+      </div>
+
+      <form id="adminLoginForm" style="display:flex; flex-direction:column; gap:1.15rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <label for="adminUsername" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-sub); font-family:var(--font-mono);">Username</label>
+          <input type="text" id="adminUsername" class="tactile-input" value="staff" required>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <label for="adminPassword" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-sub); font-family:var(--font-mono);">Password</label>
+          <input type="password" id="adminPassword" class="tactile-input" value="password123" required>
+        </div>
+        <button type="submit" class="btn-tactile-primary" style="width: 100%; margin-top: 0.25rem;">Sign In to Dashboard ⚡</button>
+      </form>
+    </div>
+
+    <!-- Main Dashboard View -->
+    <main id="mainDashboard" style="display: flex; flex-direction: column; gap: 1.75rem;">
+      <!-- 1. Event Overview Banner -->
+      <section class="glass-panel event-banner">
+        <div class="event-header-row">
+          <div>
+            <div style="margin-bottom: 0.35rem;">
+              <span class="tactile-badge badge-cyan">ACTIVE HACKATHON ARENA</span>
+            </div>
+            <h1 class="event-title" id="eventNameDisplay">Loading Event...</h1>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.65rem;">
+            <div class="tactile-badge badge-neutral" style="font-family: var(--font-mono);">
+              <span style="color:var(--text-muted);">Event ID:</span> <span style="color:var(--text-main); font-weight:700;" id="eventIdLabel">1</span>
+            </div>
+            <button type="button" class="btn-tactile-purple" id="bannerExportBtn">
+              📥 Export CSV Report
+            </button>
+          </div>
+        </div>
+
+        <div class="event-meta-chips">
+          <div class="meta-chip">
+            <span>📅</span>
+            <span>Date: <strong id="eventDateDisplay">--</strong></span>
+          </div>
+          <div class="meta-chip">
+            <span>📍</span>
+            <span>Venue: <strong id="eventVenueDisplay">--</strong></span>
+          </div>
+          <div class="meta-chip">
+            <span>👥</span>
+            <span>Total Capacity: <strong id="eventCapacityDisplay">--</strong></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. High-Impact KPI Metric Cards -->
+      <section class="kpi-grid">
+        <!-- Turnout / Check-Ins Card -->
+        <div class="glass-panel glass-card-hover kpi-card">
+          <div>
+            <div class="kpi-label">
+              <span>Total Gate Check-Ins</span>
+              <span class="tactile-badge badge-mint" style="height: 22px; font-size: 11px;">TURNOUT</span>
+            </div>
+            <div class="kpi-value-row" style="margin-top: 0.65rem;">
+              <span class="kpi-main-number" id="checkedInCount">0</span>
+              <span class="kpi-subtext" id="checkinRatio">/ 0 Registered</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-family: var(--font-mono);">
+              <span style="color: var(--text-sub); font-weight: 600;">Attendance Rate</span>
+              <span style="color: #006b5d; font-weight: 700;" id="turnoutPercent">0.0%</span>
+            </div>
+            <div class="tactile-progress-track">
+              <div class="tactile-progress-fill tactile-progress-mint" id="checkinProgressBar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Registration & Capacity Card -->
+        <div class="glass-panel glass-card-hover kpi-card">
+          <div>
+            <div class="kpi-label">
+              <span>Total Registrations</span>
+              <span class="tactile-badge badge-cyan" style="height: 22px; font-size: 11px;">CAPACITY</span>
+            </div>
+            <div class="kpi-value-row" style="margin-top: 0.65rem;">
+              <span class="kpi-main-number" id="registeredCount">0</span>
+              <span class="kpi-subtext" id="capacityRatio">/ 100 Max Capacity</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-family: var(--font-mono);">
+              <span style="color: var(--text-sub); font-weight: 600;">Capacity Filled</span>
+              <span style="color: #00677d; font-weight: 700;" id="capacityPercent">0.0%</span>
+            </div>
+            <div class="tactile-progress-track">
+              <div class="tactile-progress-fill tactile-progress-cyan" id="capacityProgressBar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remaining Expected Attendees Card -->
+        <div class="glass-panel glass-card-hover kpi-card">
+          <div>
+            <div class="kpi-label">
+              <span>Pending Arrival</span>
+              <span class="tactile-badge badge-amber" style="height: 22px; font-size: 11px;">IN-TRANSIT</span>
+            </div>
+            <div class="kpi-value-row" style="margin-top: 0.65rem;">
+              <span class="kpi-main-number" id="pendingArrivalCount">0</span>
+              <span class="kpi-subtext">Attendees Yet to Scan</span>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-family: var(--font-mono); background: rgba(245, 242, 255, 0.8); padding: 0.65rem 0.95rem; border-radius: var(--radius-md); border: 1px solid rgba(226, 224, 248, 0.9);">
+            <span style="color: var(--text-sub); font-weight: 600;">Remaining Capacity:</span>
+            <span style="color: var(--text-main); font-weight: 700;" id="remainingSpotsCount">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Per-Ticket Type Breakdown Mini-Cards -->
+      <section style="display:flex; flex-direction:column; gap:0.85rem;">
+        <h2 class="section-title">
+          <span>🎫 Ticket Types &amp; Turnout Breakdown</span>
+        </h2>
+        <div class="ticket-types-grid" id="ticketTypesContainer">
+          <!-- Dynamic Mini-Cards Injected Here -->
+        </div>
+      </section>
+
+      <!-- 4. Organizer Data Tools (Bulk Import & CSV Export) -->
+      <section style="display:flex; flex-direction:column; gap:0.85rem;">
+        <h2 class="section-title">
+          <span>⚙️ Event Data Management &amp; Tools</span>
+        </h2>
+        <div class="tools-grid">
+          <!-- CSV Bulk Import Card -->
+          <div class="glass-panel tool-card">
+            <div class="tool-header">
+              <h3>📂 Bulk Import Attendees (CSV)</h3>
+              <p>Upload a CSV file to register multiple attendees simultaneously within an atomic SQLite transaction.</p>
+            </div>
+
+            <form id="csvImportForm" style="display:flex; flex-direction:column; gap:0.85rem;">
+              <div class="file-drop-area" id="fileDropZone">
+                <span style="font-size:1.75rem;">📄</span>
+                <div style="font-size:0.9rem; color:var(--text-main); font-weight:700; margin-top:0.35rem;">
+                  Click to select CSV file
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Supports name, email, phone, ticket_type</div>
+                <input type="file" id="csvFileInput" accept=".csv" required>
+                <div class="file-name-preview" id="fileNamePreview">No file chosen</div>
+              </div>
+
+              <div style="display:flex; gap:0.65rem;">
+                <button type="submit" class="btn-tactile-primary" style="flex:1;" id="importSubmitBtn">
+                  <span>Start Bulk Import</span>
+                  <span>⚡</span>
+                </button>
+                <button type="button" class="btn-tactile-secondary" id="templateDownloadBtn" title="Download sample CSV template">
+                  Template
+                </button>
+              </div>
+
+              <div class="alert-box" id="importAlertBox"></div>
+            </form>
+          </div>
+
+          <!-- Attendance Report Export Card -->
+          <div class="glass-panel tool-card">
+            <div class="tool-header">
+              <h3>📊 Attendance Records &amp; Audit Export</h3>
+              <p>Generate an official CSV export containing check-in timestamps, admission statuses, and ticket tokens.</p>
+            </div>
+
+            <div style="background:rgba(245, 242, 255, 0.8); border:1px solid rgba(226, 224, 248, 0.9); padding:1rem 1.25rem; border-radius:var(--radius-lg); font-size:0.85rem; color:var(--text-body); display:flex; flex-direction:column; gap:0.65rem;">
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-sub); font-weight:600;">File Format:</span>
+                <span style="font-family:var(--font-mono); color:#00677d; font-weight:700;">RFC 4180 (.csv)</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-sub); font-weight:600;">Included Columns:</span>
+                <span style="font-family:var(--font-mono); color:var(--text-main); font-weight:600;">Name, Email, Phone, Ticket, Check-in, Token</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="color:var(--text-sub); font-weight:600;">Live Record Count:</span>
+                <span style="font-family:var(--font-mono); color:#006b5d; font-weight:700;" id="exportRecordCount">--</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-tactile-purple" id="directReportBtn" style="width: 100%; margin-top: auto;">
+              <span>📥 Download Attendance Report (.csv)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Live Check-in Activity Feed -->
+      <section class="glass-panel activity-card">
+        <div class="activity-header">
+          <h2 class="section-title">
+            <span>⚡ Live Check-In Activity Feed</span>
+          </h2>
+          <span style="font-size:0.8rem; font-family:var(--font-mono); color:var(--text-sub); font-weight:600;" id="feedCountLabel">
+            0 Verified Check-Ins
+          </span>
+        </div>
+
+        <div class="activity-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Attendee</th>
+                <th>Ticket Type</th>
+                <th>Check-In Timestamp</th>
+                <th>Token Fingerprint</th>
+              </tr>
+            </thead>
+            <tbody id="activityTableBody">
+              <tr>
+                <td colspan="5" class="empty-state">
+                  No attendees have checked in yet. Open the scanner to begin!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Configuration & State
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id') || '1';
+    let pollInterval = null;
+    let isFetching = false;
+
+    // Elements
+    const authOverlay = document.getElementById('authOverlay');
+    const mainDashboard = document.getElementById('mainDashboard');
+    const syncStatus = document.getElementById('syncStatus');
+    const eventIdLabel = document.getElementById('eventIdLabel');
+    const fileDropZone = document.getElementById('fileDropZone');
+    const csvFileInput = document.getElementById('csvFileInput');
+    const fileNamePreview = document.getElementById('fileNamePreview');
+    const importAlertBox = document.getElementById('importAlertBox');
+    const importSubmitBtn = document.getElementById('importSubmitBtn');
+
+    eventIdLabel.textContent = eventId;
+
+    // 1. Authenticate / Check Session
+    async function verifyAuth() {
+      try {
+        const storedToken = localStorage.getItem('passgate_staff_token');
+        const headers = {};
+        if (storedToken) headers['Authorization'] = `Bearer ${storedToken}`;
+
+        const res = await fetch('/api/staff/me', { headers });
+        if (res.ok) {
+          showDashboard();
+          fetchStats();
+          startAutoPolling();
+        } else {
+          showAuth();
+        }
+      } catch {
+        showAuth();
+      }
+    }
+
+    function showAuth() {
+      authOverlay.style.display = 'flex';
+      mainDashboard.style.display = 'none';
+      if (pollInterval) clearInterval(pollInterval);
+    }
+
+    function showDashboard() {
+      authOverlay.style.display = 'none';
+      mainDashboard.style.display = 'flex';
+    }
+
+    // Login Form
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('adminUsername').value.trim();
+      const password = document.getElementById('adminPassword').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Authentication failed');
+
+        if (data.token) {
+          localStorage.setItem('passgate_staff_token', data.token);
+        }
+
+        showDashboard();
+        fetchStats();
+        startAutoPolling();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (pollInterval) clearInterval(pollInterval);
+      localStorage.removeItem('passgate_staff_token');
+      await fetch('/api/logout', { method: 'POST' });
+      showAuth();
+    });
+
+    // Manual Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      fetchStats();
+    });
+
+    // 2. Report Export Handlers
+    function triggerReportDownload() {
+      const storedToken = localStorage.getItem('passgate_staff_token') || '';
+      const url = `/api/events/${eventId}/report.csv?token=${encodeURIComponent(storedToken)}`;
+      window.location.href = url;
+    }
+
+    document.getElementById('downloadReportNavBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerReportDownload();
+    });
+
+    document.getElementById('bannerExportBtn').addEventListener('click', () => {
+      triggerReportDownload();
+    });
+
+    document.getElementById('directReportBtn').addEventListener('click', () => {
+      triggerReportDownload();
+    });
+
+    // Template Download Handler
+    document.getElementById('templateDownloadBtn').addEventListener('click', () => {
+      const templateContent = 'name,email,phone,ticket_type_name\nSarah Connor,sarah@example.com,+1-555-0301,General\nJohn Connor,john@example.com,+1-555-0302,VIP\n';
+      const blob = new Blob([templateContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'passgate-attendees-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // 3. File Input Interactions
+    fileDropZone.addEventListener('click', () => {
+      csvFileInput.click();
+    });
+
+    csvFileInput.addEventListener('change', () => {
+      if (csvFileInput.files.length > 0) {
+        fileNamePreview.textContent = `Selected: ${csvFileInput.files[0].name} (${(csvFileInput.files[0].size / 1024).toFixed(1)} KB)`;
+      } else {
+        fileNamePreview.textContent = 'No file chosen';
+      }
+    });
+
+    // 4. CSV Bulk Import Form Submit
+    document.getElementById('csvImportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      importAlertBox.style.display = 'none';
+
+      if (!csvFileInput.files || csvFileInput.files.length === 0) {
+        showImportAlert('Please select a valid .csv file first.', false);
+        return;
+      }
+
+      const file = csvFileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      importSubmitBtn.disabled = true;
+      importSubmitBtn.innerHTML = '<span>Importing Records...</span> <span>⏳</span>';
+
+      try {
+        const storedToken = localStorage.getItem('passgate_staff_token');
+        const headers = {};
+        if (storedToken) headers['Authorization'] = `Bearer ${storedToken}`;
+
+        const res = await fetch(`/api/events/${eventId}/import-csv`, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Bulk import failed.');
+        }
+
+        let msg = `✅ ${data.message}`;
+        if (data.skipped && data.skipped.length > 0) {
+          msg += `\n⚠️ Skipped entries: ${data.skipped.map(s => `Row ${s.row}: ${s.reason}`).join('; ')}`;
+        }
+
+        showImportAlert(msg, true);
+        csvFileInput.value = '';
+        fileNamePreview.textContent = 'No file chosen';
+        fetchStats(); // Update dashboard immediately
+
+      } catch (err) {
+        showImportAlert(err.message, false);
+      } finally {
+        importSubmitBtn.disabled = false;
+        importSubmitBtn.innerHTML = '<span>Start Bulk Import</span> <span>⚡</span>';
+      }
+    });
+
+    function showImportAlert(message, isSuccess) {
+      importAlertBox.textContent = message;
+      importAlertBox.className = `alert-box ${isSuccess ? 'alert-success' : 'alert-error'}`;
+      importAlertBox.style.display = 'block';
+    }
+
+    // 5. Fetch and Update Stats
+    async function fetchStats() {
+      if (isFetching) return;
+      isFetching = true;
+
+      try {
+        const storedToken = localStorage.getItem('passgate_staff_token');
+        const headers = {};
+        if (storedToken) headers['Authorization'] = `Bearer ${storedToken}`;
+
+        const res = await fetch(`/api/events/${eventId}/stats`, { headers });
+
+        if (res.status === 401) {
+          showAuth();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error('Failed to load event statistics');
+        }
+
+        const data = await res.json();
+        updateDashboardDOM(data);
+        syncStatus.textContent = 'LIVE SYNC (2s)';
+      } catch (err) {
+        syncStatus.textContent = 'SYNC ERROR';
+        console.warn('Stats fetch warning:', err);
+      } finally {
+        isFetching = false;
+      }
+    }
+
+    // 6. Smooth DOM Updates
+    function updateDashboardDOM(data) {
+      const { event, metrics, ticket_types, recent_checkins, source } = data;
+
+      const supaBadge = document.getElementById('supabaseBadge');
+      if (supaBadge) {
+        if (source === 'supabase') {
+          supaBadge.innerHTML = '<span class="badge-dot badge-dot-cyan animate-pulse-subtle"></span> <span>SUPABASE LIVE</span>';
+        } else {
+          supaBadge.innerHTML = '<span class="badge-dot badge-dot-cyan"></span> <span>SUPABASE CONNECTED</span>';
+        }
+      }
+
+      // Event Metadata
+      document.getElementById('eventNameDisplay').textContent = event.name;
+      document.getElementById('eventDateDisplay').textContent = event.date;
+      document.getElementById('eventVenueDisplay').textContent = event.venue;
+      document.getElementById('eventCapacityDisplay').textContent = `${event.capacity} Attendees`;
+
+      // KPI: Total Check-Ins
+      document.getElementById('checkedInCount').textContent = metrics.total_checked_in;
+      document.getElementById('checkinRatio').textContent = `/ ${metrics.total_registered} Registered`;
+      document.getElementById('turnoutPercent').textContent = `${metrics.turnout_percentage}%`;
+      document.getElementById('checkinProgressBar').style.width = `${Math.min(100, metrics.turnout_percentage)}%`;
+
+      // KPI: Total Registrations / Capacity
+      document.getElementById('registeredCount').textContent = metrics.total_registered;
+      document.getElementById('capacityRatio').textContent = `/ ${metrics.capacity} Capacity`;
+      document.getElementById('capacityPercent').textContent = `${metrics.capacity_utilization}%`;
+      document.getElementById('capacityProgressBar').style.width = `${Math.min(100, metrics.capacity_utilization)}%`;
+      document.getElementById('exportRecordCount').textContent = `${metrics.total_registered} Registered (${metrics.total_checked_in} Checked In)`;
+
+      // KPI: Pending Arrivals
+      const pending = Math.max(0, metrics.total_registered - metrics.total_checked_in);
+      document.getElementById('pendingArrivalCount').textContent = pending;
+      document.getElementById('remainingSpotsCount').textContent = `${metrics.remaining_capacity} spots`;
+
+      // Ticket Types Breakdown Cards
+      renderTicketTypes(ticket_types);
+
+      // Recent Activity Feed Table
+      renderRecentActivity(recent_checkins);
+    }
+
+    // Render Ticket Types Cards
+    function renderTicketTypes(ticketTypes) {
+      const container = document.getElementById('ticketTypesContainer');
+      container.innerHTML = '';
+
+      ticketTypes.forEach(tt => {
+        const card = document.createElement('div');
+        card.className = 'glass-panel ticket-mini-card';
+
+        const isVIP = tt.name.toUpperCase().includes('VIP');
+        const badgeClass = isVIP ? 'badge-amber' : 'badge-cyan';
+        const progressFillClass = isVIP ? 'tactile-progress-amber' : 'tactile-progress-cyan';
+
+        card.innerHTML = `
+          <div class="ticket-mini-header">
+            <span class="tactile-badge ${badgeClass}">${tt.name}</span>
+            <span style="font-family:var(--font-mono); font-size:0.8rem; color:${isVIP ? '#b45309' : '#00677d'}; font-weight:700;">
+              ${tt.turnout_percentage}% Turnout
+            </span>
+          </div>
+
+          <div class="ticket-counts">
+            <div>
+              <strong>Checked In</strong>
+              <span>${tt.checked_in_count} / ${tt.registered_count}</span>
+            </div>
+            <div>
+              <strong>Allocation Limit</strong>
+              <span>${tt.registered_count} / ${tt.ticket_limit}</span>
+            </div>
+          </div>
+
+          <div class="tactile-progress-track" style="height: 6px;">
+            <div class="tactile-progress-fill ${progressFillClass}" style="width: ${Math.min(100, tt.turnout_percentage)}%;"></div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // Render Activity Table
+    function renderRecentActivity(recentCheckins) {
+      const tbody = document.getElementById('activityTableBody');
+      const feedCountLabel = document.getElementById('feedCountLabel');
+
+      feedCountLabel.textContent = `${recentCheckins.length} Recent Scans`;
+
+      if (!recentCheckins || recentCheckins.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state">
+              No attendees have checked in yet. Open the scanner to begin!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      recentCheckins.forEach(chk => {
+        const tr = document.createElement('tr');
+        const isVIP = chk.ticket_type.toUpperCase().includes('VIP');
+        const badgeClass = isVIP ? 'badge-amber' : 'badge-cyan';
+
+        tr.innerHTML = `
+          <td>
+            <span class="tactile-badge badge-mint" style="font-size: 0.72rem; padding: 0.15rem 0.65rem;">
+              <span style="font-weight:900;">✓</span> VERIFIED
+            </span>
+          </td>
+          <td>
+            <div style="font-weight: 700; color: var(--text-main);">
+              <span>${chk.name}</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${chk.email}</span>
+          </td>
+          <td>
+            <span class="tactile-badge ${badgeClass}" style="font-size:0.7rem; padding:0.15rem 0.6rem;">${chk.ticket_type}</span>
+          </td>
+          <td style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-sub);">
+            ${chk.checked_in_at}
+          </td>
+          <td>
+            <span class="token-chip" style="font-family: var(--font-mono); font-size: 0.75rem; color: #00677d; background: rgba(0, 194, 232, 0.1); border: 1px solid rgba(0, 194, 232, 0.25); padding: 0.2rem 0.55rem; border-radius: var(--radius-pill); font-weight: 600;">${chk.token.substring(0, 10)}...</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 7. Polling Scheduler (2000ms)
+    function startAutoPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(fetchStats, 2000);
+    }
+
+    // Init on load
+    verifyAuth();
+  </script>
+</body>
+</html>

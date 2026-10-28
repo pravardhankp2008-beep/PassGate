@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  
+  /* Hydroglass Cyber-Tactile Palette */
+  --color-surface: #fbf8ff;
+  --color-surface-dim: #d9d8ef;
+  --color-surface-bright: #fbf8ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container: #eeecff;
+  --color-surface-container-high: #e7e6fd;
+  --color-on-surface: #191a2b;
+  --color-on-surface-variant: #3c494d;
+  
+  --color-primary: #00677d;
+  --color-primary-container: #00c2e8;
+  --color-secondary: #7135d1;
+  --color-secondary-container: #8b52ec;
+  --color-tertiary: #006b5d;
+  --color-tertiary-container: #00c8af;
+  --color-error: #ba1a1a;
+  
+  --color-cyber-blue: #00c2e8;
+  --color-cyber-purple: #8b52ec;
+  --color-cyber-mint: #00c8af;
+  --color-cyber-dark: #0d0e1e;
+  --color-cyber-card: #ffffff;
+  --color-cyber-border: #bbc9ce;
+}
+
+@layer base {
+  body {
+    background-color: #fbf8ff;
+    background-image: 
+      radial-gradient(circle at 12% 14%, rgba(0, 194, 232, 0.09) 0%, transparent 45%),
+      radial-gradient(circle at 88% 86%, rgba(157, 101, 255, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 50% 40%, rgba(0, 200, 175, 0.05) 0%, transparent 60%);
+    background-attachment: fixed;
+    color: #191a2b;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(245, 242, 255, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 194, 232, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 194, 232, 0.6);
+}
+
+/* Glowing animations & cyber tactile utilities */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Frosted glass utilities */
+.hydro-glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-top-color: rgba(255, 255, 255, 0.98);
+  border-bottom-color: rgba(0, 194, 232, 0.22);
+  box-shadow: 0 12px 32px -4px rgba(45, 49, 78, 0.06), 0 4px 12px 0 rgba(0, 194, 232, 0.04);
+}

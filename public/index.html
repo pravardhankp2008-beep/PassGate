@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassGate | Supabase Powered Event Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/hydroglass.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 1.25rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Hero Glass Header */
+    .header-card {
+      padding: 2.75rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #00c2e8 0%, #8b52ec 50%, #00c8af 100%);
+    }
+
+    .brand-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+    }
+
+    .brand-title span {
+      background: linear-gradient(135deg, #00677d 0%, #00c2e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-sub);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      max-width: 720px;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      padding: 2rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .meta-list {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .meta-list strong {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .code-box {
+      background: rgba(245, 242, 255, 0.85);
+      border: 1px solid rgba(187, 201, 206, 0.6);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #00677d;
+      font-weight: 600;
+      box-shadow: inset 0 1px 2px rgba(45, 49, 78, 0.04);
+      word-break: break-all;
+    }
+
+    .tag {
+      font-family: var(--font-mono);
+      background: rgba(0, 194, 232, 0.12);
+      color: #00677d;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 194, 232, 0.25);
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body class="hydroglass-theme">
+  <div class="container">
+    <!-- Header -->
+    <header class="glass-panel header-card">
+      <div style="margin-bottom: 1.25rem; display: flex; gap: 0.65rem; flex-wrap: wrap;">
+        <span class="tactile-badge badge-cyan">
+          <span class="badge-dot badge-dot-cyan animate-pulse-subtle"></span>
+          SUPABASE CONNECTED
+        </span>
+        <span class="tactile-badge badge-mint">
+          <span class="badge-dot badge-dot-mint"></span>
+          @supabase/supabase-js v2.118
+        </span>
+      </div>
+      <h1 class="brand-title">Pass<span>Gate</span> Engine</h1>
+      <p class="subtitle">
+        High-throughput event ticketing &amp; atomic check-in architecture powered by <strong>Supabase PostgreSQL</strong> and styled with the luminous <strong>Hydroglass Cyber-Tactile</strong> design system.
+      </p>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="grid">
+      <!-- Database & Schema -->
+      <section class="glass-panel glass-card-hover card">
+        <h2>⚡ Supabase Cloud Database</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+          Configured with your project credentials:
+        </p>
+        <div class="code-box">
+          URL: https://xbcnuutbvwdmitkptzcd.supabase.co<br>
+          KEY: sb_publishable_x-qTff...
+        </div>
+        <ul class="meta-list" style="margin-top: 0.5rem;">
+          <li><strong>events:</strong> id, name, date, venue, capacity</li>
+          <li><strong>ticket_types:</strong> event_id, name, ticket_limit</li>
+          <li><strong>attendees:</strong> token (indexed), checked_in</li>
+          <li><strong>staff:</strong> username, password_hash, role</li>
+        </ul>
+      </section>
+
+      <!-- Attendee Portal -->
+      <section class="glass-panel glass-card-hover card">
+        <h2>🎟️ Attendee Portal</h2>
+        <ul class="meta-list">
+          <li><strong>Event:</strong> Byte Race 2026 Opening Ceremony</li>
+          <li><strong>Venue:</strong> Main Hackathon Arena, Tech Hub</li>
+          <li><strong>Capacity:</strong> 100 Participants</li>
+          <li><strong>Pass Format:</strong> Instant High-Res QR Pass</li>
+        </ul>
+        <div style="margin-top: auto; padding-top: 1rem;">
+          <a href="/register.html?event_id=1" class="btn-tactile-primary" style="width: 100%; box-sizing: border-box;">
+            <span>🎟️ Register &amp; Get QR Pass</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Gate Scanner & Dashboard -->
+      <section class="glass-panel glass-card-hover card">
+        <h2>🔐 Gate Scanner &amp; Analytics</h2>
+        <ul class="meta-list">
+          <li><strong>Staff Username:</strong> <span class="tag">staff</span></li>
+          <li><strong>Staff Password:</strong> <span class="tag">password123</span></li>
+          <li><strong>Atomic Engine:</strong> Instant Double-Entry Prevention</li>
+          <li><strong>Live Polling:</strong> 2s Live Counter &amp; Audit CSV</li>
+        </ul>
+        <div style="display: flex; gap: 0.75rem; margin-top: auto; padding-top: 1rem;">
+          <a href="/scan.html" class="btn-tactile-mint" style="flex: 1; text-align: center;">
+            <span>📷 Scanner</span>
+          </a>
+          <a href="/admin.html?event_id=1" class="btn-tactile-purple" style="flex: 1; text-align: center;">
+            <span>📊 Dashboard</span>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer-note">
+      Hydroglass Cyber-Tactile UI &bull; PassGate Atomic Check-In Engine &bull; Supabase Cloud
+    </footer>
+  </div>
+</body>
+</html>

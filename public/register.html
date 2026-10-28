@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassGate | Event Registration & Digital Pass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/hydroglass.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.25rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Top Brand Nav */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.03em;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, #00677d 0%, #00c2e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Event Info Banner */
+    .event-card {
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .event-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3.5px;
+      background: linear-gradient(90deg, #00c2e8, #8b52ec);
+    }
+
+    .event-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+    }
+
+    .event-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.85rem;
+      font-size: 0.875rem;
+      color: var(--text-sub);
+    }
+
+    .event-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(226, 224, 248, 0.7);
+    }
+
+    .event-meta-item strong {
+      color: var(--text-main);
+      font-weight: 600;
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    /* Form Card */
+    .form-card {
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-header p {
+      color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Alert Banner */
+    .alert {
+      padding: 0.95rem 1.25rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.875rem;
+      display: none;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 500;
+    }
+
+    .alert-danger {
+      background: var(--error-container);
+      border: 1.5px solid rgba(186, 26, 26, 0.25);
+      color: var(--on-error-container);
+      box-shadow: 0 4px 12px rgba(186, 26, 26, 0.08);
+    }
+
+    /* Success Digital Pass Card */
+    #successSection {
+      display: none;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .pass-container {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-elevation-3);
+    }
+
+    .pass-header {
+      background: linear-gradient(135deg, #f5f2ff 0%, #eeecff 100%);
+      padding: 1.75rem 2rem;
+      border-bottom: 2px dashed rgba(187, 201, 206, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Tactile Notch Cutouts */
+    .pass-header::before, .pass-header::after {
+      content: '';
+      position: absolute;
+      bottom: -13px;
+      width: 26px;
+      height: 26px;
+      background: #fbf8ff;
+      border-radius: 50%;
+      box-shadow: inset 0 2px 4px rgba(45, 49, 78, 0.1);
+    }
+
+    .pass-header::before { left: -13px; }
+    .pass-header::after { right: -13px; }
+
+    .pass-badge {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.35rem 0.95rem;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pass-badge.VIP {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+    }
+
+    .pass-badge.General {
+      background: linear-gradient(135deg, #00c2e8, #0098b8);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 194, 232, 0.35);
+    }
+
+    .pass-body {
+      padding: 2.25rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .qr-frame {
+      background: #ffffff;
+      padding: 1.25rem;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(226, 224, 248, 0.8);
+      box-shadow: 0 12px 30px rgba(0, 194, 232, 0.15), 0 4px 12px rgba(45, 49, 78, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-frame img {
+      width: 210px;
+      height: 210px;
+      display: block;
+    }
+
+    .token-box {
+      width: 100%;
+      background: rgba(245, 242, 255, 0.9);
+      border: 1px solid rgba(187, 201, 206, 0.7);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      box-shadow: inset 0 1px 2px rgba(45, 49, 78, 0.04);
+    }
+
+    .token-text {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #00677d;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid rgba(0, 194, 232, 0.3);
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(45, 49, 78, 0.06);
+    }
+
+    .copy-btn:hover {
+      background: #fbf8ff;
+      border-color: #00c2e8;
+      color: #00677d;
+    }
+
+    .attendee-details {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      text-align: left;
+      font-size: 0.875rem;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 1.25rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(226, 224, 248, 0.8);
+    }
+
+    .attendee-details div strong {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+    }
+
+    .attendee-details div span {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .pass-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+      width: 100%;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0 !important;
+      }
+      .nav-bar, .event-card, #registrationSection, .pass-actions, .copy-btn, #registerAnotherBtn {
+        display: none !important;
+      }
+      #successSection {
+        display: block !important;
+      }
+      .pass-container {
+        border: 2px solid #000 !important;
+        box-shadow: none !important;
+        color: #000 !important;
+        background: #fff !important;
+      }
+      .pass-header {
+        background: #f1f5f9 !important;
+        border-bottom: 2px dashed #000 !important;
+      }
+      .pass-badge {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+      }
+      .attendee-details {
+        background: #f8fafc !important;
+        border: 1px solid #ccc !important;
+      }
+      .attendee-details div span {
+        color: #000 !important;
+      }
+      .token-box {
+        background: #f8fafc !important;
+        border: 1px solid #ccc !important;
+      }
+      .token-text {
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body class="hydroglass-theme">
+  <div class="container">
+    <!-- Nav Header -->
+    <header class="nav-bar">
+      <a href="/" class="logo">PASS<span>GATE</span></a>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span class="tactile-badge badge-cyan" id="supabaseBadge">
+          <span class="badge-dot badge-dot-cyan"></span>
+          SUPABASE CONNECTED
+        </span>
+        <span class="tactile-badge badge-mint">
+          <span class="badge-dot badge-dot-mint animate-pulse-subtle"></span>
+          REGISTRATION OPEN
+        </span>
+      </div>
+    </header>
+
+    <!-- Event Summary Card -->
+    <section class="glass-panel event-card" id="eventCard">
+      <div style="align-self: flex-start;">
+        <span class="tactile-badge badge-cyan">VERIFIED HACKATHON ARENA</span>
+      </div>
+      <h1 class="event-title" id="eventTitle">Loading Event Details...</h1>
+      <div class="event-meta">
+        <div class="event-meta-item">
+          <span style="font-size: 1.25rem;">📅</span>
+          <div>
+            <strong>Date & Time</strong>
+            <div id="eventDate" style="color: var(--text-main); font-weight: 600;">--</div>
+          </div>
+        </div>
+        <div class="event-meta-item">
+          <span style="font-size: 1.25rem;">📍</span>
+          <div>
+            <strong>Venue</strong>
+            <div id="eventVenue" style="color: var(--text-main); font-weight: 600;">--</div>
+          </div>
+        </div>
+        <div class="event-meta-item">
+          <span style="font-size: 1.25rem;">🎟️</span>
+          <div>
+            <strong>Availability</strong>
+            <div id="eventCapacity" style="color: var(--text-main); font-weight: 600;">--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Alert Box -->
+    <div class="alert alert-danger" id="errorAlert">
+      <span>⚠️</span>
+      <span id="errorMessage">An error occurred</span>
+    </div>
+
+    <!-- Registration Form Section -->
+    <section class="glass-panel form-card" id="registrationSection">
+      <div class="form-header">
+        <h2>Attendee Registration</h2>
+        <p>Complete your registration to secure your admission pass &amp; high-speed QR check-in token.</p>
+      </div>
+
+      <form id="registrationForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="form-group">
+          <label for="name">Full Name *</label>
+          <input type="text" id="name" class="tactile-input" placeholder="e.g. Alex Rivers" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" class="tactile-input" placeholder="e.g. alex@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number (Optional)</label>
+          <input type="tel" id="phone" class="tactile-input" placeholder="e.g. +1 555-0199">
+        </div>
+
+        <div class="form-group">
+          <label for="ticketType">Select Ticket Type *</label>
+          <select id="ticketType" class="tactile-input" required>
+            <option value="" disabled selected>Loading ticket availability...</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-tactile-primary" id="submitBtn" style="width: 100%; margin-top: 0.5rem;">
+          <span>Complete Registration &amp; Generate Pass</span>
+          <span>⚡</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Success Pass Section -->
+    <section id="successSection">
+      <div class="pass-container">
+        <!-- Pass Header -->
+        <div class="pass-header">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.04em;">PASSGATE OFFICIAL ADMISSION PASS</div>
+            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);" id="passEventName">Byte Race 2026</div>
+          </div>
+          <div class="pass-badge General" id="passBadge">General</div>
+        </div>
+
+        <!-- Pass Body -->
+        <div class="pass-body">
+          <div class="qr-frame">
+            <img id="qrImage" src="" alt="Digital Check-in Pass QR Code">
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-sub); max-width: 440px;">
+            Present this unique QR code at the entrance scanner for high-speed gate check-in.
+          </div>
+
+          <!-- Token Box -->
+          <div class="token-box">
+            <span class="token-text" id="passToken">TOKEN-PLACEHOLDER</span>
+            <button type="button" class="copy-btn" id="copyTokenBtn">Copy</button>
+          </div>
+
+          <!-- Attendee Specs -->
+          <div class="attendee-details">
+            <div>
+              <strong>Attendee</strong>
+              <span id="passName">--</span>
+            </div>
+            <div>
+              <strong>Email</strong>
+              <span id="passEmail">--</span>
+            </div>
+            <div>
+              <strong>Date &amp; Time</strong>
+              <span id="passDate">--</span>
+            </div>
+            <div>
+              <strong>Location</strong>
+              <span id="passVenue">--</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pass-actions">
+            <button type="button" class="btn-tactile-secondary" id="downloadQrBtn">
+              <span>💾 Download QR</span>
+            </button>
+            <button type="button" class="btn-tactile-secondary" id="printPassBtn">
+              <span>🖨️ Print Pass</span>
+            </button>
+          </div>
+
+          <button type="button" class="btn-tactile-secondary" style="width: 100%; margin-top: 0.25rem;" id="registerAnotherBtn">
+            <span>Register Another Attendee</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // Extract eventId from URL query param (e.g. ?event_id=1) or default to 1
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id') || '1';
+
+    let currentQrDataUrl = '';
+    let currentToken = '';
+
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    const registrationSection = document.getElementById('registrationSection');
+    const successSection = document.getElementById('successSection');
+    const submitBtn = document.getElementById('submitBtn');
+    const ticketSelect = document.getElementById('ticketType');
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorAlert.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearError() {
+      errorAlert.style.display = 'none';
+      errorMessage.textContent = '';
+    }
+
+    // 1. Fetch Event and Ticket Types on load
+    async function loadEventData() {
+      try {
+        const response = await fetch(`/api/events/${eventId}`);
+        if (!response.ok) {
+          throw new Error('Event not found or failed to load.');
+        }
+
+        const data = await response.json();
+        const event = data.event;
+        const ticketTypes = data.ticket_types;
+
+        // Populate Event Info
+        document.getElementById('eventTitle').textContent = event.name;
+        document.getElementById('eventDate').textContent = event.date;
+        document.getElementById('eventVenue').textContent = event.venue;
+        document.getElementById('eventCapacity').textContent = 
+          `${event.capacity_remaining} spots remaining (of ${event.capacity})`;
+
+        // Populate Ticket Type Dropdown
+        ticketSelect.innerHTML = '<option value="" disabled selected>-- Select Your Ticket Type --</option>';
+
+        if (event.is_sold_out) {
+          showError('This event is completely sold out! Registration is now closed.');
+          submitBtn.disabled = true;
+          return;
+        }
+
+        ticketTypes.forEach(tt => {
+          const opt = document.createElement('option');
+          opt.value = tt.id;
+          if (tt.is_sold_out) {
+            opt.disabled = true;
+            opt.textContent = `${tt.name} (SOLD OUT - 0 left of ${tt.ticket_limit})`;
+          } else {
+            opt.textContent = `${tt.name} (${tt.remaining} spots left of ${tt.ticket_limit})`;
+          }
+          ticketSelect.appendChild(opt);
+        });
+
+      } catch (err) {
+        showError(err.message || 'Unable to connect to the PassGate event server.');
+      }
+    }
+
+    // 2. Handle Form Submission
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const ticketTypeId = ticketSelect.value;
+
+      if (!ticketTypeId) {
+        showError('Please select a ticket type.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Processing Registration...</span> <span>⏳</span>';
+
+      try {
+        const response = await fetch(`/api/register/${eventId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            ticket_type_id: ticketTypeId
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Registration failed.');
+        }
+
+        // Render Success Card
+        renderSuccessPass(result);
+
+      } catch (err) {
+        showError(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Complete Registration & Generate Pass</span> <span>⚡</span>';
+      }
+    });
+
+    // 3. Render Pass on Registration Success
+    function renderSuccessPass(data) {
+      const { attendee, qrCode, token } = data;
+
+      currentQrDataUrl = qrCode;
+      currentToken = token;
+
+      document.getElementById('passEventName').textContent = attendee.event_name;
+      document.getElementById('passName').textContent = attendee.name;
+      document.getElementById('passEmail').textContent = attendee.email;
+      document.getElementById('passDate').textContent = attendee.event_date;
+      document.getElementById('passVenue').textContent = attendee.venue;
+      document.getElementById('passToken').textContent = token;
+      
+      const badge = document.getElementById('passBadge');
+      badge.textContent = attendee.ticket_type;
+      badge.className = `pass-badge ${attendee.ticket_type}`;
+
+      document.getElementById('qrImage').src = qrCode;
+
+      // Swap views
+      registrationSection.style.display = 'none';
+      successSection.style.display = 'flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 4. Download QR Code helper
+    document.getElementById('downloadQrBtn').addEventListener('click', () => {
+      if (!currentQrDataUrl) return;
+      const a = document.createElement('a');
+      a.href = currentQrDataUrl;
+      a.download = `passgate-qr-${currentToken.substring(0, 8)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+
+    // 5. Print Pass
+    document.getElementById('printPassBtn').addEventListener('click', () => {
+      window.print();
+    });
+
+    // 6. Copy Token Button
+    document.getElementById('copyTokenBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(currentToken).then(() => {
+        const btn = document.getElementById('copyTokenBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    });
+
+    // 7. Register Another Attendee
+    document.getElementById('registerAnotherBtn').addEventListener('click', () => {
+      document.getElementById('registrationForm').reset();
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Complete Registration & Generate Pass</span> <span>⚡</span>';
+      successSection.style.display = 'none';
+      registrationSection.style.display = 'flex';
+      loadEventData();
+    });
+
+    // Initialize on load
+    loadEventData();
+  </script>
+</body>
+</html>
